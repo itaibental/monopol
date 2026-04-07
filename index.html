@@ -138,6 +138,34 @@ body {
 }
 .btn-admin:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
 
+/* ── Floating admin tab ── */
+.admin-tab {
+  position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+  z-index: 100;
+  background: linear-gradient(160deg, #1a1d2e, #0e1020);
+  border: 1px solid rgba(240,192,64,0.25);
+  border-right: none;
+  border-radius: 14px 0 0 14px;
+  padding: 14px 10px;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.4);
+  transition: all 0.2s;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+.admin-tab:hover {
+  background: linear-gradient(160deg, #252840, #151828);
+  border-color: rgba(240,192,64,0.5);
+  box-shadow: -6px 0 28px rgba(0,0,0,0.5);
+  padding-right: 14px;
+}
+.admin-tab-icon { font-size: 18px; writing-mode: horizontal-tb; }
+.admin-tab-label {
+  font-size: 11px; font-weight: 700; color: rgba(240,192,64,0.7);
+  letter-spacing: 1.5px;
+}
+
 /* ── Continue session ── */
 .continue-banner {
   margin-bottom: 18px; padding: 12px 16px; border-radius: 12px;
@@ -218,6 +246,12 @@ body {
 
 <div class="stars" id="stars"></div>
 
+<!-- Floating admin tab -->
+<div class="admin-tab" onclick="openAdminModal()" title="כניסה לאזור ניהול">
+  <span class="admin-tab-icon">🔐</span>
+  <span class="admin-tab-label">ניהול</span>
+</div>
+
 <!-- MAIN CONTENT -->
 <div class="logo-wrap">
   <span class="logo-icon">🎲</span>
@@ -271,7 +305,6 @@ body {
   <!-- Actions -->
   <div class="actions">
     <button class="btn-play" onclick="startGame()">🎮 התחל משחק</button>
-    <button class="btn-admin" onclick="openAdminModal()">🔐 כניסה לאזור ניהול</button>
   </div>
 
 </div>
@@ -301,7 +334,7 @@ body {
 <script type="module">
 import { getLeaderboard, loadGameState, db, ref, onValue } from './js/firebase-config.js';
 
-const ADMIN_PASSWORD = 'teacher123'; // שנה לסיסמה שלך
+const ADMIN_PASSWORD = 'ibt1234';
 const PAWNS = ['🔴','🔵','🟢','🟡'];
 
 let currentMode = 'solo';
