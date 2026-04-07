@@ -264,7 +264,7 @@
     <div class="game-sub">תקשורת וחברה תשפ"ו · 33 מושגים</div>
   </div>
   <div class="header-controls">
-    <button class="hbtn" onclick="window.location.href='index.html'">🏠 בית</button>
+    <button class="hbtn" id="btnHome">🏠 בית</button>
     <button class="hbtn" id="visitedCount">0/33 ✓</button>
   </div>
 </header>
@@ -283,7 +283,7 @@
           <div class="die" id="die1">🎲</div>
           <div class="die" id="die2">🎲</div>
         </div>
-        <button class="roll-btn" id="rollBtn" onclick="rollDice()">הטל קוביות</button>
+        <button class="roll-btn" id="rollBtn">הטל קוביות</button>
       </div>
       <div class="pawns-layer" id="pawnsLayer"></div>
     </div>
@@ -299,22 +299,27 @@
 </div>
 
 <!-- CONCEPT / QUIZ MODAL -->
-<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this&&!quizActive)closeModal()">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeModal()">✕</button>
+<div class="modal-overlay" id="modal" style="display:none">
+  <div class="modal-box" id="modalBox">
+    <button class="modal-close" id="modalClose">✕</button>
     <div id="modalContent"></div>
   </div>
 </div>
 
 <script type="module">
-import { DEFAULT_CONCEPTS, ZONE_COLORS, ZONE_NAMES } from './js/concepts-data.js';
-import { loadCustomConcepts, getLeaderboard, saveGameState, loadGameState, updatePlayerScore } from './js/firebase-config.js';
-import { buildBoardMap, getGridPos, getCellPixelCenter, NUM_POSITIONS, CORNER_POS, PAWNS, PAWN_COLORS, DICE_FACES } from './js/game-engine.js';
-
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-let CONCEPTS = DEFAULT_CONCEPTS;
+let CONCEPTS = [];
+let ZONE_COLORS = {};
+let ZONE_NAMES = {};
+let buildBoardMap, getGridPos, getCellPixelCenter;
+let NUM_POSITIONS = 40, CORNER_POS = [0,10,20,30];
+let PAWNS = ['🔴','🔵','🟢','🟡'];
+let PAWN_COLORS = ['#ef4444','#3b82f6','#22c55e','#eab308'];
+let DICE_FACES = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+let loadCustomConcepts, getLeaderboard, saveGameState, loadGameState, updatePlayerScore;
+
 let BOARD_MAP = {};
 let players = [];
 let currentPlayer = 0;
@@ -325,13 +330,55 @@ let sessionId = '';
 let gameMode = 'solo';
 
 async function init() {
-  // Load concepts (custom overrides defaults)
+  // Load core data modules — must succeed
   try {
-    const custom = await loadCustomConcepts();
-    if (custom && Object.keys(custom).length > 0) {
-      CONCEPTS = Object.values(custom);
-    }
-  } catch(e) {}
+    const concepts = await import('./js/concepts-data.js');
+    CONCEPTS = concepts.DEFAULT_CONCEPTS;
+    ZONE_COLORS = concepts.ZONE_COLORS;
+    ZONE_NAMES = concepts.ZONE_NAMES;
+  } catch(e) {
+    document.getElementById('turnInfo').textContent = 'שגיאה: לא ניתן לטעון נתונים. בדוק שהקבצים קיימים.';
+    console.error('concepts-data load failed:', e);
+    return;
+  }
+
+  try {
+    const engine = await import('./js/game-engine.js');
+    buildBoardMap = engine.buildBoardMap;
+    getGridPos = engine.getGridPos;
+    getCellPixelCenter = engine.getCellPixelCenter;
+    NUM_POSITIONS = engine.NUM_POSITIONS;
+    CORNER_POS = engine.CORNER_POS;
+    PAWNS = engine.PAWNS;
+    PAWN_COLORS = engine.PAWN_COLORS;
+    DICE_FACES = engine.DICE_FACES;
+  } catch(e) {
+    document.getElementById('turnInfo').textContent = 'שגיאה: לא ניתן לטעון מנוע משחק.';
+    console.error('game-engine load failed:', e);
+    return;
+  }
+
+  // Firebase — optional, failures won't block game
+  try {
+    const fb = await import('./js/firebase-config.js');
+    loadCustomConcepts = fb.loadCustomConcepts;
+    getLeaderboard = fb.getLeaderboard;
+    saveGameState = fb.saveGameState;
+    loadGameState = fb.loadGameState;
+    updatePlayerScore = fb.updatePlayerScore;
+  } catch(e) {
+    console.warn('Firebase not available, running offline:', e);
+  }
+
+  // Optionally load custom concepts from Firebase
+  if (loadCustomConcepts) {
+    try {
+      const custom = await loadCustomConcepts();
+      if (custom && Object.keys(custom).length > 0) {
+        CONCEPTS = Object.values(custom);
+      }
+    } catch(e) {}
+  }
 
   BOARD_MAP = buildBoardMap(CONCEPTS);
 
@@ -380,6 +427,7 @@ async function init() {
 // LEADERBOARD BAR
 // ═══════════════════════════════════════════════
 async function loadLeaderboard() {
+  if (!getLeaderboard) return;
   try {
     const lb = await getLeaderboard();
     const bar = document.getElementById('lbBar');
@@ -480,7 +528,7 @@ function animatePawn(playerIdx, newPos) {
 // ═══════════════════════════════════════════════
 // DICE
 // ═══════════════════════════════════════════════
-window.rollDice = async function() {
+async function rollDice() {
   if (rolling || quizActive) return;
   rolling = true;
   document.getElementById('rollBtn').disabled = true;
@@ -566,13 +614,13 @@ function openConceptModal(pos, autoQuiz = false) {
     <div class="modal-title">${c.name}</div>
     <div class="modal-short">${c.short}</div>
     <div class="modal-def">${c.def}</div>
-    <button class="modal-play-btn" style="background:linear-gradient(135deg,${color}cc,${color});color:#000" onclick="startQuiz()">
+    <button class="modal-play-btn" style="background:linear-gradient(135deg,${color}cc,${color});color:#000" data-action="startQuiz">
       🎮 התחל 5 שאלות
     </button>`;
   document.getElementById('modal').style.display = 'flex';
 }
 
-window.closeModal = function() {
+function closeModal() {
   if (quizActive) return;
   document.getElementById('modal').style.display = 'none';
   currentConcept = null;
@@ -584,7 +632,7 @@ window.closeModal = function() {
 // ═══════════════════════════════════════════════
 let qState = null;
 
-window.startQuiz = function() {
+function startQuiz() {
   if (!currentConcept) return;
   quizActive = true;
   qState = { concept: currentConcept, qi: 0, score: 0, dots: new Array(5).fill('') };
@@ -606,13 +654,13 @@ function renderQuestion() {
       <div class="q-text">${q.q}</div>
     </div>
     <div class="q-opts">
-      ${q.opts.map((o,i) => `<button class="q-opt" onclick="answerQ(${i})">${o}</button>`).join('')}
+      ${q.opts.map((o,i) => `<button class="q-opt" data-action="answerQ" data-idx="${i}">${o}</button>`).join('')}
     </div>
     <div class="q-feedback" id="qfb"></div>
-    <button class="q-next" id="qnext" onclick="nextQ()">${qi < 4 ? 'שאלה הבאה ›' : 'תוצאות ›'}</button>`;
+    <button class="q-next" id="qnext" data-action="nextQ">${qi < 4 ? 'שאלה הבאה ›' : 'תוצאות ›'}</button>`;
 }
 
-window.answerQ = function(chosen) {
+function answerQ(chosen) {
   const { concept, qi } = qState;
   const q = concept.quiz[qi];
   const opts = document.querySelectorAll('.q-opt');
@@ -628,7 +676,7 @@ window.answerQ = function(chosen) {
   document.getElementById('qnext').classList.add('show');
 };
 
-window.nextQ = function() {
+function nextQ() {
   qState.qi++;
   if (qState.qi >= 5) showResult();
   else renderQuestion();
@@ -650,8 +698,8 @@ function showResult() {
       <div class="result-msg">${msg}</div>
       <div class="result-sub">הרווחת <strong style="color:${color}">+${points} נקודות</strong></div>
       <div class="result-btns">
-        <button class="r-btn primary" onclick="retryQuiz()">נסה שוב</button>
-        <button class="r-btn secondary" onclick="finishQuiz()">סיים</button>
+        <button class="r-btn primary" data-action="retryQuiz">נסה שוב</button>
+        <button class="r-btn secondary" data-action="finishQuiz">סיים</button>
       </div>
     </div>`;
   renderPlayers();
@@ -659,13 +707,13 @@ function showResult() {
   persistState();
 }
 
-window.retryQuiz = function() {
+function retryQuiz() {
   quizActive = true;
   qState.qi = 0; qState.score = 0; qState.dots = new Array(5).fill('');
   renderQuestion();
 };
 
-window.finishQuiz = function() {
+function finishQuiz() {
   quizActive = false;
   document.getElementById('modal').style.display = 'none';
   nextPlayer(); renderPlayers(); updateTurnInfo();
@@ -675,11 +723,13 @@ window.finishQuiz = function() {
 // PERSIST TO FIREBASE
 // ═══════════════════════════════════════════════
 async function persistState() {
-  if (!sessionId) return;
+  if (!sessionId || !saveGameState) return;
   try {
     await saveGameState(sessionId, { players, currentPlayer, visited: [...visited], sessionId, mode: gameMode });
-    for (const p of players) {
-      await updatePlayerScore(sessionId, p.name, p.score, p.pos);
+    if (updatePlayerScore) {
+      for (const p of players) {
+        await updatePlayerScore(sessionId, p.name, p.score, p.pos);
+      }
     }
     loadLeaderboard();
   } catch(e) {}
@@ -696,6 +746,31 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2500);
 }
+
+// ═══════════════════════════════════════════════
+// EVENT WIRING
+// ═══════════════════════════════════════════════
+document.getElementById('btnHome').addEventListener('click', () => window.location.href = 'index.html');
+document.getElementById('rollBtn').addEventListener('click', () => rollDice());
+document.getElementById('modalClose').addEventListener('click', () => closeModal());
+
+// Close modal when clicking backdrop
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this && !quizActive) closeModal();
+});
+document.getElementById('modalBox').addEventListener('click', e => e.stopPropagation());
+
+// Event delegation for dynamically rendered buttons inside modal
+document.getElementById('modalContent').addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === 'startQuiz') startQuiz();
+  else if (action === 'answerQ') answerQ(parseInt(btn.dataset.idx));
+  else if (action === 'nextQ') nextQ();
+  else if (action === 'retryQuiz') retryQuiz();
+  else if (action === 'finishQuiz') finishQuiz();
+});
 
 // ═══════════════════════════════════════════════
 // START

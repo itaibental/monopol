@@ -228,13 +228,13 @@ body { font-family: 'Rubik', sans-serif; background: #0a0e1a; color: var(--text)
     <div class="admin-title">⚙️ ממשק ניהול</div>
     <div class="admin-sub">עריכת שאלות ומושגים · בגרות מונופול תשפ"ו</div>
   </div>
-  <button class="btn-back" onclick="window.location.href='index.html'">← חזור לבית</button>
+  <button class="btn-back" id="btnBack">← חזור לבית</button>
 </div>
 
 <!-- TAB BAR -->
 <div class="tab-bar">
-  <div class="tab active" onclick="switchTab('concepts')">📚 מושגים ושאלות</div>
-  <div class="tab" onclick="switchTab('leaderboard')">🏆 לוח שיאים</div>
+  <div class="tab active" id="tabBtnConcepts">📚 מושגים ושאלות</div>
+  <div class="tab" id="tabBtnLeaderboard">🏆 לוח שיאים</div>
 </div>
 
 <div id="tabConcepts" class="tab-content active">
@@ -244,7 +244,7 @@ body { font-family: 'Rubik', sans-serif; background: #0a0e1a; color: var(--text)
       <div class="sidebar-title">מושגים (33)</div>
       <div class="concept-list" id="conceptList"></div>
       <div class="sidebar-footer">
-        <button class="btn-add" onclick="addNewConcept()">+ הוסף מושג חדש</button>
+        <button class="btn-add" id="btnAddConcept">+ הוסף מושג חדש</button>
       </div>
     </div>
 
@@ -276,7 +276,7 @@ body { font-family: 'Rubik', sans-serif; background: #0a0e1a; color: var(--text)
       </tbody>
     </table>
     <div style="margin-top:16px">
-      <button onclick="clearLeaderboard()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-family:Rubik;font-size:12px;cursor:pointer">
+      <button id="btnClearLb" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-family:Rubik;font-size:12px;cursor:pointer">
         🗑 נקה לוח שיאים
       </button>
     </div>
@@ -291,12 +291,13 @@ let concepts = [];
 let selectedId = null;
 
 // ── Tab switching ──
-window.switchTab = function(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === (tab === 'concepts' ? 0 : 1)));
+function switchTab(tab) {
+  document.getElementById('tabBtnConcepts').classList.toggle('active', tab === 'concepts');
+  document.getElementById('tabBtnLeaderboard').classList.toggle('active', tab === 'leaderboard');
   document.getElementById('tabConcepts').classList.toggle('active', tab === 'concepts');
   document.getElementById('tabLeaderboard').classList.toggle('active', tab === 'leaderboard');
   if (tab === 'leaderboard') loadLbTable();
-};
+}
 
 // ── Load concepts ──
 async function loadConcepts() {
@@ -317,7 +318,7 @@ async function loadConcepts() {
 function renderSidebar() {
   const list = document.getElementById('conceptList');
   list.innerHTML = concepts.map(c => `
-    <div class="concept-item ${c.id === selectedId ? 'active' : ''}" onclick="selectConcept(${c.id})">
+    <div class="concept-item ${c.id === selectedId ? 'active' : ''}" data-action="selectConcept" data-id="${c.id}">
       <div class="concept-zone-dot" style="background:${ZONE_COLORS[c.zone]}"></div>
       <span class="concept-id">${c.id}</span>
       <span class="concept-name">${c.name}</span>
@@ -325,13 +326,13 @@ function renderSidebar() {
 }
 
 // ── Select concept ──
-window.selectConcept = function(id) {
+function selectConcept(id) {
   selectedId = id;
   renderSidebar();
   const c = concepts.find(x => x.id === id);
   if (!c) return;
   renderEditor(c);
-};
+}
 
 // ── Editor ──
 function renderEditor(c) {
@@ -371,9 +372,9 @@ function renderEditor(c) {
     </div>
 
     <div class="action-bar">
-      <button class="btn-save" onclick="saveConcept()">💾 שמור שינויים</button>
-      <button class="btn-addq" onclick="addQuestion()">+ הוסף שאלה</button>
-      <button class="btn-delete" onclick="deleteConcept(${c.id})">🗑 מחק מושג</button>
+      <button class="btn-save" data-action="saveConcept">💾 שמור שינויים</button>
+      <button class="btn-addq" data-action="addQuestion">+ הוסף שאלה</button>
+      <button class="btn-delete" data-action="deleteConcept" data-id="${c.id}">🗑 מחק מושג</button>
     </div>`;
 }
 
@@ -391,7 +392,7 @@ function renderQuestionCard(q, qi) {
     <div class="question-card" id="qcard_${qi}">
       <div class="q-card-header">
         <div class="q-card-num">שאלה ${qi+1}</div>
-        <button class="btn-remove-q" onclick="removeQuestion(${qi})">הסר</button>
+        <button class="btn-remove-q" data-action="removeQuestion" data-qi="${qi}">הסר</button>
       </div>
       <div class="form-section" style="margin-bottom:10px">
         <div class="form-label" style="margin-bottom:4px">רמה</div>
@@ -438,7 +439,7 @@ function collectQuiz() {
 }
 
 // ── Add question ──
-window.addQuestion = function() {
+function addQuestion() {
   const c = concepts.find(x => x.id === selectedId);
   if (!c) return;
   const newQ = { level:'הבנה', q:'', opts:['','','',''], ans:0, explain:'' };
@@ -450,7 +451,7 @@ window.addQuestion = function() {
 };
 
 // ── Remove question ──
-window.removeQuestion = function(qi) {
+function removeQuestion(qi) {
   const c = concepts.find(x => x.id === selectedId);
   if (!c) return;
   c.quiz = collectQuiz();
@@ -459,7 +460,7 @@ window.removeQuestion = function(qi) {
 };
 
 // ── Save concept ──
-window.saveConcept = async function() {
+async function saveConcept() {
   const c = concepts.find(x => x.id === selectedId);
   if (!c) return;
   c.name = document.getElementById('fName')?.value || c.name;
@@ -480,7 +481,7 @@ window.saveConcept = async function() {
 };
 
 // ── Delete concept ──
-window.deleteConcept = async function(id) {
+async function deleteConcept(id) {
   if (!confirm('האם למחוק מושג זה? הפעולה בלתי הפיכה.')) return;
   concepts = concepts.filter(c => c.id !== id);
   selectedId = null;
@@ -497,7 +498,7 @@ window.deleteConcept = async function(id) {
 };
 
 // ── Add new concept ──
-window.addNewConcept = function() {
+function addNewConcept() {
   const maxId = Math.max(...concepts.map(c => c.id), 0);
   const newC = {
     id: maxId + 1, name: 'מושג חדש', zone: 0, short: 'תיאור קצר',
@@ -530,7 +531,7 @@ async function loadLbTable() {
   } catch(e) {}
 }
 
-window.clearLeaderboard = async function() {
+async function clearLeaderboard() {
   if (!confirm('למחוק את כל לוח השיאים? הפעולה בלתי הפיכה.')) return;
   try {
     await set(ref(db, 'leaderboard'), null);
@@ -551,6 +552,30 @@ function showToast(msg, isError = false) {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2500);
 }
+
+// ── Event wiring ──
+document.getElementById('btnBack').addEventListener('click', () => window.location.href = 'index.html');
+document.getElementById('tabBtnConcepts').addEventListener('click', () => switchTab('concepts'));
+document.getElementById('tabBtnLeaderboard').addEventListener('click', () => switchTab('leaderboard'));
+document.getElementById('btnAddConcept').addEventListener('click', () => addNewConcept());
+document.getElementById('btnClearLb').addEventListener('click', () => clearLeaderboard());
+
+// Event delegation for sidebar concept list
+document.getElementById('conceptList').addEventListener('click', function(e) {
+  const item = e.target.closest('[data-action="selectConcept"]');
+  if (item) selectConcept(parseInt(item.dataset.id));
+});
+
+// Event delegation for editor panel (dynamic buttons)
+document.getElementById('editorPanel').addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === 'saveConcept') saveConcept();
+  else if (action === 'addQuestion') addQuestion();
+  else if (action === 'deleteConcept') deleteConcept(parseInt(btn.dataset.id));
+  else if (action === 'removeQuestion') removeQuestion(parseInt(btn.dataset.qi));
+});
 
 // ── Init ──
 loadConcepts();

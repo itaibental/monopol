@@ -2,7 +2,6 @@
 // GAME ENGINE — board layout, dice, movement, quiz
 // ═══════════════════════════════════════════════
 import { ZONE_COLORS, ZONE_NAMES } from './concepts-data.js';
-import { updatePlayerScore, saveGameState } from './firebase-config.js';
 
 export const NUM_POSITIONS = 40;
 export const CORNER_POS = [0, 10, 20, 30];
@@ -128,22 +127,4 @@ export function getResultMsg(score) {
   if (score === 5) return 'מושלם! 🏆';
   if (score >= 3) return 'כל הכבוד! 💪';
   return 'נסה שוב 📚';
-}
-
-// ═══════════════════════════════════════════════
-// PERSIST GAME STATE
-// ═══════════════════════════════════════════════
-export async function persistState(state) {
-  if (!state.sessionId) return;
-  await saveGameState(state.sessionId, {
-    players: state.players,
-    currentPlayer: state.currentPlayer,
-    visited: [...state.visited],
-    sessionId: state.sessionId,
-    mode: state.mode
-  });
-  // Update leaderboard for each player
-  for (const p of state.players) {
-    await updatePlayerScore(state.sessionId, p.name, p.score, p.pos);
-  }
 }
