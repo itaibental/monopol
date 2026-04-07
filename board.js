@@ -74,13 +74,13 @@ function getGridPos(pos) {
   return { row: 1, col: 1 };
 }
 
-// Cell visual size: corner=64px, normal=50px. Board=580px.
-// Grid: col 1=64px, col 2-10=50px×9=450px, col 11=64px → total 578px ✓
+// Cell visual size: corner=128px, normal=100px. Board=1160px.
+// Grid: col 1=128px, col 2-10=100px×9=900px, col 11=128px → total 1156px ✓
 // Pixel positions for pawns
 function getCellPixelCenter(pos) {
   const gp = getGridPos(pos);
-  const colWidths = [0, 64, 50,50,50,50,50,50,50,50,50, 64];
-  const rowHeights = [0, 64, 50,50,50,50,50,50,50,50,50, 64];
+  const colWidths = [0, 128, 100,100,100,100,100,100,100,100,100, 128];
+  const rowHeights = [0, 128, 100,100,100,100,100,100,100,100,100, 128];
   let x = 0, y = 0;
   for (let c = 1; c < gp.col; c++) x += colWidths[c];
   x += colWidths[gp.col] / 2;

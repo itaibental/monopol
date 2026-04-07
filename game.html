@@ -103,9 +103,9 @@
 }
 
 /* ═══════════ CELL OWNERSHIP ═══════════ */
-.cell-owner-bar{position:absolute;bottom:0;left:0;right:0;height:5px;border-radius:0 0 2px 2px}
-.cell-value{position:absolute;bottom:1px;left:3px;font-size:6px;font-weight:700;opacity:0.8}
-.cell.owned{border:1.5px solid rgba(255,255,255,0.25) !important}
+.cell-owner-bar{position:absolute;bottom:0;left:0;right:0;height:8px;border-radius:0 0 2px 2px}
+.cell-value{position:absolute;bottom:2px;left:5px;font-size:10px;font-weight:700;opacity:0.8}
+.cell.owned{border:2px solid rgba(255,255,255,0.3) !important}
 
 /* ═══════════ CREDITS DISPLAY ═══════════ */
 .p-credits{font-size:11px;color:#4fc3f7;font-weight:600}
@@ -406,7 +406,7 @@
 <!-- ZOOM SLIDER -->
 <div class="zoom-control">
   <div class="zoom-label">🔍</div>
-  <input type="range" class="zoom-slider" id="zoomSlider" min="40" max="150" value="100" oninput="applyZoom(this.value)">
+  <input type="range" class="zoom-slider" id="zoomSlider" min="30" max="120" value="50" oninput="applyZoom(this.value)">
   <div class="zoom-val" id="zoomVal">100%</div>
 </div>
 
@@ -746,11 +746,11 @@ function renderPawns() {
   layer.innerHTML = '';
   players.forEach((p, i) => {
     const { x, y } = getCellPixelCenter(p.pos);
-    const offset = (i - (players.length-1)/2) * 12;
+    const offset = (i - (players.length-1)/2) * 20;
     const pawn = document.createElement('div');
     pawn.className = 'pawn'; pawn.id = 'pawn' + i;
-    pawn.style.left = (x + offset - 7) + 'px';
-    pawn.style.top = (y - 24 + (i*3)) + 'px';
+    pawn.style.left = (x + offset - 16) + 'px';
+    pawn.style.top = (y - 40 + (i*5)) + 'px';
     pawn.innerHTML = `<div class="pawn-body" style="background:${p.color}"></div><div class="pawn-stem"></div><div class="pawn-label">${p.pawn}</div>`;
     layer.appendChild(pawn);
   });
@@ -759,9 +759,9 @@ function renderPawns() {
 function animatePawn(pi, newPos) {
   return new Promise(resolve => {
     const {x,y} = getCellPixelCenter(newPos);
-    const offset = (pi - (players.length-1)/2) * 12;
+    const offset = (pi - (players.length-1)/2) * 20;
     const pawn = document.getElementById('pawn'+pi);
-    if (pawn) { pawn.style.left=(x+offset-7)+'px'; pawn.style.top=(y-24+(pi*3))+'px'; }
+    if (pawn) { pawn.style.left=(x+offset-16)+'px'; pawn.style.top=(y-40+(pi*5))+'px'; }
     setTimeout(resolve, 500);
   });
 }
@@ -1284,6 +1284,7 @@ async function drawerLoadLeaderboard(){
 // START
 // ═══════════════════════════════════════════════
 init();
+applyZoom(50);
 </script>
 </body>
 </html>
