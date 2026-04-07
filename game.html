@@ -75,32 +75,73 @@
 .lb-chip-score{color:#888;font-weight:600}
 
 /* ═══════════ 3D DICE ═══════════ */
-.dice-area{display:flex;gap:14px;pointer-events:all;margin-top:6px;align-items:center}
-.die3d-wrap{width:50px;height:50px;perspective:200px;cursor:pointer}
-.die3d{width:50px;height:50px;position:relative;transform-style:preserve-3d;transition:transform 0.8s cubic-bezier(0.2,0.8,0.3,1)}
-.die3d.rolling{animation:diceRoll3d 0.8s ease}
+.dice-area{display:flex;gap:14px;pointer-events:all;margin-top:8px;align-items:center;justify-content:center}
+.die3d-wrap{width:48px;height:48px;perspective:300px;cursor:pointer}
+.die3d{width:48px;height:48px;position:relative;transform-style:preserve-3d;transition:transform 0.6s cubic-bezier(0.2,0.8,0.3,1)}
+.die3d.rolling{animation:diceRoll3d 0.7s ease-in-out}
 @keyframes diceRoll3d{
-  0%{transform:rotateX(0) rotateY(0) rotateZ(0)}
-  25%{transform:rotateX(270deg) rotateY(180deg) rotateZ(90deg)}
-  50%{transform:rotateX(540deg) rotateY(90deg) rotateZ(180deg)}
-  75%{transform:rotateX(810deg) rotateY(270deg) rotateZ(270deg)}
-  100%{transform:rotateX(0) rotateY(0) rotateZ(0)}
+  0%{transform:rotateX(0) rotateY(0)}
+  20%{transform:rotateX(200deg) rotateY(150deg) scale(1.15)}
+  50%{transform:rotateX(400deg) rotateY(300deg) scale(0.95)}
+  80%{transform:rotateX(600deg) rotateY(450deg) scale(1.05)}
+  100%{transform:rotateX(720deg) rotateY(540deg)}
 }
-.die-face{position:absolute;width:50px;height:50px;background:linear-gradient(145deg,#fff8e0,#f0e6c0);border:2px solid #c8a030;border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;padding:8px;gap:4px;box-shadow:inset 0 0 10px rgba(0,0,0,0.05)}
-.die-face.f-front{transform:translateZ(25px)}
-.die-face.f-back{transform:rotateY(180deg) translateZ(25px)}
-.die-face.f-top{transform:rotateX(90deg) translateZ(25px)}
-.die-face.f-bottom{transform:rotateX(-90deg) translateZ(25px)}
-.die-face.f-right{transform:rotateY(90deg) translateZ(25px)}
-.die-face.f-left{transform:rotateY(-90deg) translateZ(25px)}
-.pip{width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#6b1a1a,#2a0a0a);box-shadow:0 1px 2px rgba(0,0,0,0.3)}
+.die-face{position:absolute;width:48px;height:48px;background:linear-gradient(145deg,#fffbe6,#f5e6b8);border:2.5px solid #b8941a;border-radius:9px;box-shadow:inset 0 2px 6px rgba(255,255,255,0.4),inset 0 -2px 6px rgba(0,0,0,0.08)}
+.die-face.f-front{transform:translateZ(24px)}
+.die-face.f-back{transform:rotateY(180deg) translateZ(24px)}
+.die-face.f-top{transform:rotateX(90deg) translateZ(24px)}
+.die-face.f-bottom{transform:rotateX(-90deg) translateZ(24px)}
+.die-face.f-right{transform:rotateY(90deg) translateZ(24px)}
+.die-face.f-left{transform:rotateY(-90deg) translateZ(24px)}
+.pip{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8b2020,#1a0505);box-shadow:inset 0 1px 1px rgba(255,255,255,0.15),0 1px 2px rgba(0,0,0,0.4);position:absolute;transform:translate(-50%,-50%)}
 
 /* ═══════════ CELL OWNERSHIP ═══════════ */
-.cell-owner-bar{position:absolute;bottom:0;left:0;right:0;height:4px;border-radius:0 0 2px 2px}
-.cell-value{position:absolute;bottom:1px;left:3px;font-size:6px;font-weight:700;opacity:0.7}
+.cell-owner-bar{position:absolute;bottom:0;left:0;right:0;height:5px;border-radius:0 0 2px 2px}
+.cell-value{position:absolute;bottom:1px;left:3px;font-size:6px;font-weight:700;opacity:0.8}
+.cell.owned{border:1.5px solid rgba(255,255,255,0.25) !important}
 
 /* ═══════════ CREDITS DISPLAY ═══════════ */
 .p-credits{font-size:11px;color:#4fc3f7;font-weight:600}
+
+/* ═══════════ ZOOM SLIDER ═══════════ */
+.zoom-control{
+  position:fixed;bottom:20px;right:20px;z-index:300;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:rgba(0,0,0,0.7);border:1px solid #2e3250;border-radius:12px;padding:10px 8px;
+}
+.zoom-label{font-size:9px;color:#8b90b8;font-weight:600}
+.zoom-slider{
+  writing-mode:vertical-lr;direction:rtl;
+  width:28px;height:120px;appearance:none;background:transparent;cursor:pointer;
+}
+.zoom-slider::-webkit-slider-runnable-track{width:4px;height:100%;background:#2e3250;border-radius:2px}
+.zoom-slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);border:2px solid #8B6914;margin-left:-7px;cursor:pointer}
+.zoom-slider::-moz-range-track{width:4px;height:100%;background:#2e3250;border-radius:2px}
+.zoom-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);border:2px solid #8B6914;cursor:pointer}
+.zoom-val{font-size:10px;color:var(--gold);font-weight:700}
+
+/* ═══════════ QUIZ TIMER BAR ═══════════ */
+.quiz-timer-bar{width:100%;height:6px;border-radius:3px;background:#252840;margin:8px 0 4px;overflow:hidden;position:relative}
+.quiz-timer-fill{height:100%;border-radius:3px;transition:width 0.3s linear,background 0.3s}
+.quiz-timer-label{font-size:10px;font-weight:700;text-align:center;margin-bottom:6px;transition:color 0.3s}
+
+/* ═══════════ FLOATING SCOREBOARD ═══════════ */
+.floating-scores{
+  position:fixed;top:auto;bottom:80px;left:50%;transform:translateX(-50%);z-index:250;
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
+  pointer-events:none;
+}
+.fscore-chip{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;
+  background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.1);
+  font-size:11px;pointer-events:all;backdrop-filter:blur(8px);
+  transition:all 0.3s;
+}
+.fscore-chip.active{border-color:var(--gold);box-shadow:0 0 10px rgba(240,192,64,0.2)}
+.fscore-pawn{font-size:13px}
+.fscore-name{color:var(--text);font-weight:500;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fscore-credits{color:#4fc3f7;font-weight:700}
 
 /* ═══════════ LOADING ═══════════ */
 .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
@@ -355,6 +396,16 @@
   </div>
 </div>
 
+<!-- ZOOM SLIDER -->
+<div class="zoom-control">
+  <div class="zoom-label">🔍</div>
+  <input type="range" class="zoom-slider" id="zoomSlider" min="40" max="150" value="100" oninput="applyZoom(this.value)">
+  <div class="zoom-val" id="zoomVal">100%</div>
+</div>
+
+<!-- FLOATING SCOREBOARD -->
+<div class="floating-scores" id="floatingScores"></div>
+
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this&&!quizActive)closeModal()">
   <div class="modal-box" id="modalBox" onclick="event.stopPropagation()">
@@ -408,7 +459,7 @@ const PIP_LAYOUTS = {
 };
 
 function renderDieFace(n) {
-  return PIP_LAYOUTS[n].map(([x,y]) => `<div class="pip" style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%)"></div>`).join('');
+  return PIP_LAYOUTS[n].map(([x,y]) => `<div class="pip" style="left:${x}%;top:${y}%"></div>`).join('');
 }
 
 function buildDie(el) {
@@ -643,12 +694,21 @@ function renderBoard() {
       if (pos >= 11 && pos <= 19) edgeClass = 'left-col';
       else if (pos >= 20 && pos <= 30) edgeClass = 'top-row';
       else if (pos >= 31 && pos <= 39) edgeClass = 'right-col';
-      cell.className = `cell ${edgeClass} ${visited.has(pos)?'visited':''}`;
-      cell.style.background = color + '18';
+
+      const own = cellOwnership[pos];
+      const isOwned = !!own;
+      cell.className = `cell ${edgeClass} ${visited.has(pos)?'visited':''} ${isOwned?'owned':''}`;
+
+      if (isOwned && players[own.playerIdx]) {
+        const ownerColor = players[own.playerIdx].color;
+        cell.style.background = ownerColor + '30';
+        cell.style.borderColor = ownerColor + '60';
+      } else {
+        cell.style.background = color + '18';
+      }
 
       let ownerHtml = '';
-      const own = cellOwnership[pos];
-      if (own) {
+      if (isOwned) {
         const tier = SPEED_TIERS[own.speedTier];
         ownerHtml = `<div class="cell-owner-bar" style="background:${players[own.playerIdx]?.color || '#888'}"></div>
           <div class="cell-value" style="color:${tier.color}">${tier.stars} ${tier.rent}₪</div>`;
@@ -680,6 +740,17 @@ function renderPlayers() {
         <div class="p-credits">💰 ${p.credits} ₪</div>
       </div>
     </div>`).join('');
+
+  // Floating scoreboard
+  const fs = document.getElementById('floatingScores');
+  if (fs) {
+    fs.innerHTML = players.map((p, i) => `
+      <div class="fscore-chip ${i===currentPlayer?'active':''}">
+        <span class="fscore-pawn">${p.pawn}</span>
+        <span class="fscore-name">${p.name}</span>
+        <span class="fscore-credits">💰${p.credits}₪</span>
+      </div>`).join('');
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -873,24 +944,45 @@ function openConceptModal(pos, autoQuiz = false) {
 
 function closeModal() {
   if (quizActive) return;
+  clearInterval(quizTimerInterval);
   document.getElementById('modal').style.display = 'none';
   currentConcept = null;
   saveProgress();
-  nextPlayer();
 }
 
 // ═══════════════════════════════════════════════
-// QUIZ (with timing)
+// QUIZ (with timing, shuffled questions & answers, live timer)
 // ═══════════════════════════════════════════════
 let qState = null;
+let quizTimerInterval = null;
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 function startQuiz() {
   if (!currentConcept || !currentConcept.quiz || !currentConcept.quiz.length) return;
   quizActive = true;
-  const totalQ = currentConcept.quiz.length;
+
+  // Shuffle questions
+  const shuffledQuestions = shuffleArray(currentConcept.quiz.map((q, origIdx) => {
+    // Shuffle answer options, tracking the correct one
+    const optPairs = q.opts.map((o, i) => ({ text: o, wasIdx: i }));
+    const shuffledOpts = shuffleArray(optPairs);
+    const newAns = shuffledOpts.findIndex(p => p.wasIdx === q.ans);
+    return { ...q, opts: shuffledOpts.map(p => p.text), ans: newAns, origIdx };
+  }));
+
+  const totalQ = shuffledQuestions.length;
   qState = {
-    concept: currentConcept, qi:0, score:0, total:totalQ,
+    concept: currentConcept, qi: 0, score: 0, total: totalQ,
     dots: new Array(totalQ).fill(''),
+    questions: shuffledQuestions,
     startTime: Date.now(),
     questionStart: Date.now(),
     totalAnswerMs: 0
@@ -899,9 +991,9 @@ function startQuiz() {
 }
 
 function renderQuestion() {
-  const { concept, qi, dots, total } = qState;
+  const { concept, qi, dots, total, questions } = qState;
   const color = ZONE_COLORS[concept.zone];
-  const q = concept.quiz[qi];
+  const q = questions[qi];
   qState.questionStart = Date.now();
 
   const dotsHtml = dots.map((d,i) => `<div class="qdot ${i<qi?d:i===qi?'current':''}"></div>`).join('');
@@ -910,7 +1002,9 @@ function renderQuestion() {
     <div class="quiz-header">
       <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:8px">${concept.name}</div>
       <div class="quiz-prog-dots">${dotsHtml}</div>
-      <div style="font-size:11px;color:#666;margin-bottom:8px">שאלה ${qi+1} / ${total}</div>
+      <div style="font-size:11px;color:#666;margin-bottom:4px">שאלה ${qi+1} / ${total}</div>
+      <div class="quiz-timer-label" id="timerLabel">⏱ 0.0 שניות</div>
+      <div class="quiz-timer-bar"><div class="quiz-timer-fill" id="timerFill" style="width:0%;background:#22c55e"></div></div>
       <div class="q-level">${q.level}</div>
       <div class="q-text">${q.q}</div>
     </div>
@@ -919,11 +1013,34 @@ function renderQuestion() {
     </div>
     <div class="q-feedback" id="qfb"></div>
     <button class="q-next" id="qnext" onclick="nextQ()">${qi<total-1?'שאלה הבאה ›':'תוצאות ›'}</button>`;
+
+  // Start live timer
+  startQuizTimer();
+}
+
+function startQuizTimer() {
+  clearInterval(quizTimerInterval);
+  quizTimerInterval = setInterval(() => {
+    const elapsed = (Date.now() - qState.questionStart) / 1000;
+    const label = document.getElementById('timerLabel');
+    const fill = document.getElementById('timerFill');
+    if (!label || !fill) { clearInterval(quizTimerInterval); return; }
+
+    label.textContent = `⏱ ${elapsed.toFixed(1)} שניות`;
+
+    // Progress bar: 0-3s green, 3-10s blue, 10+s orange
+    const pct = Math.min(elapsed / 15 * 100, 100);
+    fill.style.width = pct + '%';
+    if (elapsed <= 3) { fill.style.background = '#22c55e'; label.style.color = '#22c55e'; }
+    else if (elapsed <= 10) { fill.style.background = '#4fc3f7'; label.style.color = '#4fc3f7'; }
+    else { fill.style.background = '#ffb74d'; label.style.color = '#ffb74d'; }
+  }, 100);
 }
 
 function answerQ(chosen) {
-  const { concept, qi } = qState;
-  const q = concept.quiz[qi];
+  clearInterval(quizTimerInterval);
+  const { questions, qi } = qState;
+  const q = questions[qi];
   const answerMs = Date.now() - qState.questionStart;
   qState.totalAnswerMs += answerMs;
 
@@ -936,9 +1053,10 @@ function answerQ(chosen) {
   if (!correct) opts[chosen].classList.add('wrong');
 
   const secs = (answerMs / 1000).toFixed(1);
+  const speedLabel = answerMs <= 3000 ? '⚡' : answerMs <= 10000 ? '🚶' : '🐢';
   const fb = document.getElementById('qfb');
-  fb.className = 'q-feedback show ' + (correct?'correct':'wrong');
-  fb.textContent = (correct?'✓ נכון! ':'✗ לא נכון. ') + q.explain + ` (${secs}ש')`;
+  fb.className = 'q-feedback show ' + (correct ? 'correct' : 'wrong');
+  fb.textContent = (correct ? '✓ נכון! ' : '✗ לא נכון. ') + q.explain + ` (${secs}ש' ${speedLabel})`;
   document.getElementById('qnext').classList.add('show');
 }
 
@@ -949,9 +1067,10 @@ function nextQ() {
 }
 
 function showResult() {
+  clearInterval(quizTimerInterval);
   const { concept, score, dots, total, totalAnswerMs } = qState;
   const color = ZONE_COLORS[concept.zone];
-  const pct = Math.round(score/total*100);
+  const pct = Math.round(score / total * 100);
   const p = players[currentPlayer];
   const points = score * 2;
   if (p) p.score += points;
@@ -970,12 +1089,12 @@ function showResult() {
       🏠 <strong>רכשת את המשבצת!</strong><br>
       <span style="color:${tier.color}">${tier.label} ${tier.stars} — שכ"ד ${tier.rent}₪</span>
     </div>`;
-    renderBoard(); // Refresh board to show ownership
+    renderBoard();
   }
 
-  const msg = score===total?'מושלם! 🏆':score>=Math.ceil(total*0.6)?'כל הכבוד! 💪':'נסה שוב 📚';
+  const msg = score === total ? 'מושלם! 🏆' : score >= Math.ceil(total * 0.6) ? 'כל הכבוד! 💪' : 'נסה שוב 📚';
   const dotsHtml = dots.map(d => `<div class="qdot ${d}"></div>`).join('');
-  const avgSec = (avgMs/1000).toFixed(1);
+  const avgSec = (avgMs / 1000).toFixed(1);
 
   document.getElementById('modalContent').innerHTML = `
     <div class="quiz-result">
@@ -986,7 +1105,6 @@ function showResult() {
       <div style="font-size:12px;color:#8b90b8;margin:6px 0">ממוצע ${avgSec} שניות לשאלה · <span style="color:${tier.color}">${tier.label}</span></div>
       ${ownershipMsg}
       <div class="result-btns">
-        <button class="r-btn primary" onclick="retryQuiz()">נסה שוב</button>
         <button class="r-btn secondary" onclick="finishQuiz()">סיים</button>
       </div>
     </div>`;
@@ -998,14 +1116,23 @@ function showResult() {
 
 function retryQuiz() {
   quizActive = true;
+  // Re-shuffle
+  const reshuffled = shuffleArray(currentConcept.quiz.map(q => {
+    const optPairs = q.opts.map((o, i) => ({ text: o, wasIdx: i }));
+    const shuffledOpts = shuffleArray(optPairs);
+    const newAns = shuffledOpts.findIndex(p => p.wasIdx === q.ans);
+    return { ...q, opts: shuffledOpts.map(p => p.text), ans: newAns };
+  }));
   qState.qi = 0; qState.score = 0;
   qState.dots = new Array(qState.total).fill('');
+  qState.questions = reshuffled;
   qState.startTime = Date.now(); qState.totalAnswerMs = 0;
   renderQuestion();
 }
 
 function finishQuiz() {
   quizActive = false;
+  clearInterval(quizTimerInterval);
   document.getElementById('modal').style.display = 'none';
   renderPlayers(); updateTurnInfo();
   saveProgress();
@@ -1022,6 +1149,16 @@ function showToast(msg) {
   t.className = 'toast'; t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2500);
+}
+
+// ═══════════════════════════════════════════════
+// ZOOM
+// ═══════════════════════════════════════════════
+function applyZoom(val) {
+  const scale = val / 100;
+  const inner = document.querySelector('.scene-inner');
+  if (inner) inner.style.transform = `scale(${scale})`;
+  document.getElementById('zoomVal').textContent = val + '%';
 }
 
 // ═══════════════════════════════════════════════

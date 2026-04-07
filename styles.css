@@ -89,6 +89,8 @@ body {
   min-width: max-content;
   display: flex; justify-content: center;
   padding: 20px 60px;
+  transform-origin: center center;
+  transition: transform 0.2s ease;
 }
 .board-3d {
   transform-style: preserve-3d;
