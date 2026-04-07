@@ -75,6 +75,20 @@ body {
   perspective-origin: 50% 20%;
   padding: 20px 10px 10px;
   display: flex; justify-content: center;
+  overflow: auto;
+  cursor: grab;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+.scene-wrap:active { cursor: grabbing; }
+.scene-wrap::-webkit-scrollbar { height: 6px; width: 6px; }
+.scene-wrap::-webkit-scrollbar-track { background: transparent; }
+.scene-wrap::-webkit-scrollbar-thumb { background: #2e3250; border-radius: 3px; }
+.scene-wrap::-webkit-scrollbar-thumb:hover { background: #4a4f70; }
+.scene-inner {
+  min-width: max-content;
+  display: flex; justify-content: center;
+  padding: 20px 60px;
 }
 .board-3d {
   transform-style: preserve-3d;

@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בגרות מונופול — משחק</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+/* ═══════════ LOGIN OVERLAY ═══════════ */
+.login-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 700; display: flex;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.login-box {
+  background: linear-gradient(160deg, #1a1d2e, #0e1020);
+  border: 1px solid #2e3250; border-radius: 20px;
+  padding: 32px 28px; width: 100%; max-width: 420px;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+.login-title { font-size: 28px; font-weight: 800; color: var(--gold); margin-bottom: 6px; }
+.login-sub { font-size: 13px; color: #8b90b8; margin-bottom: 24px; }
+
+.mode-toggle {
+  display: flex; gap: 8px; margin-bottom: 20px;
+  background: rgba(255,255,255,0.04); border-radius: 12px; padding: 4px;
+}
+.mode-btn {
+  flex: 1; padding: 10px; border-radius: 10px; border: none;
+  font-family: 'Rubik', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  background: transparent; color: #8b90b8;
+}
+.mode-btn.active { background: var(--gold); color: #1a1200; }
+
+.login-input {
+  width: 100%; padding: 12px 16px; border-radius: 12px;
+  border: 1.5px solid #2e3250; background: #252840;
+  color: var(--text); font-family: 'Rubik', sans-serif;
+  font-size: 15px; text-align: center; outline: none;
+  direction: rtl; margin-bottom: 16px;
+}
+.login-input:focus { border-color: var(--gold); }
+.login-input::placeholder { color: #4a4f70; }
+
+.login-hint {
+  font-size: 11px; color: #4a4f70; margin-bottom: 16px;
+  line-height: 1.5;
+}
+.login-btn {
+  width: 100%; padding: 14px; border-radius: 12px; border: none;
+  background: linear-gradient(135deg, #d4a017, #f0c040);
+  color: #1a1200; font-family: 'Rubik', sans-serif;
+  font-size: 16px; font-weight: 800; cursor: pointer;
+  transition: all 0.2s;
+}
+.login-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(240,192,64,0.3); }
+.login-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+.login-error {
+  margin-top: 10px; font-size: 12px; color: #ef4444;
+  display: none;
+}
+.login-back {
+  display: inline-block; margin-top: 14px;
+  font-size: 12px; color: #6b7094; text-decoration: none;
+}
+.login-back:hover { color: var(--text); }
+
+/* ═══════════ LEADERBOARD BANNER ═══════════ */
+.leaderboard-banner {
+  background: linear-gradient(135deg, #1a1200, #2d2000);
+  border-bottom: 1px solid rgba(240,192,64,0.15);
+  padding: 8px 16px;
+  overflow-x: auto;
+  display: none; /* shown after login */
+}
+.leaderboard-banner::-webkit-scrollbar { display: none; }
+.lb-banner-title {
+  font-size: 10px; color: #8a7030; font-weight: 700;
+  margin-bottom: 6px; letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.lb-banner-row {
+  display: flex; gap: 8px; min-width: max-content;
+}
+.lb-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 8px;
+  background: rgba(240,192,64,0.06);
+  border: 1px solid rgba(240,192,64,0.1);
+  font-size: 11px; white-space: nowrap;
+}
+.lb-chip.me {
+  background: rgba(124,131,255,0.1);
+  border-color: rgba(124,131,255,0.25);
+}
+.lb-chip-rank { font-weight: 800; color: var(--gold); }
+.lb-chip.me .lb-chip-rank { color: #7c83ff; }
+.lb-chip-name { font-weight: 500; color: var(--text); }
+.lb-chip-score { color: #888; font-weight: 600; }
+
+/* ═══════════ LOADING ═══════════ */
+.loading-overlay {
+  position: fixed; inset: 0; background: var(--bg);
+  z-index: 800; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+}
+.loading-spinner {
+  width: 40px; height: 40px; border: 3px solid #2e3250;
+  border-top-color: var(--gold); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: #8b90b8; }
+
+/* ═══════════ ADMIN FLOATING BUTTON + DRAWER ═══════════ */
+.admin-fab {
+  position: fixed;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  z-index: 400;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 14px 8px;
+  background: linear-gradient(180deg, #7c83ff, #5c63d0);
+  color: #fff;
+  border: none;
+  border-radius: 0 12px 12px 0;
+  font-family: 'Rubik', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  box-shadow: 4px 0 20px rgba(124,131,255,0.3);
+  transition: all 0.25s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-fab:hover {
+  padding-left: 12px;
+  box-shadow: 6px 0 28px rgba(124,131,255,0.45);
+}
+.admin-fab-icon {
+  writing-mode: horizontal-tb;
+  font-size: 16px;
+}
+
+/* Drawer overlay */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 450;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.drawer-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Drawer panel */
+.admin-drawer {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: 420px; max-width: 92vw;
+  background: #0c0f1a;
+  border-right: 1px solid #252a42;
+  z-index: 500;
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.admin-drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  padding: 16px 20px;
+  background: #141828;
+  border-bottom: 1px solid #252a42;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.drawer-title {
+  font-size: 16px; font-weight: 800;
+  color: #7c83ff;
+}
+.drawer-close {
+  width: 32px; height: 32px;
+  border-radius: 8px; border: none;
+  background: rgba(255,255,255,0.06);
+  color: #888; font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.drawer-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* Auth inside drawer */
+.drawer-auth {
+  padding: 40px 24px;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.drawer-auth-title {
+  font-size: 20px; font-weight: 800;
+  color: #7c83ff; margin-bottom: 8px;
+}
+.drawer-auth-sub {
+  font-size: 13px; color: #8b90b8; margin-bottom: 24px;
+}
+.drawer-auth-input {
+  width: 100%; max-width: 260px;
+  padding: 10px 14px; border-radius: 10px;
+  border: 1.5px solid #252a42; background: #1a1f35;
+  color: var(--text); font-family: 'Rubik', sans-serif;
+  font-size: 14px; text-align: center; outline: none;
+  margin-bottom: 12px;
+}
+.drawer-auth-input:focus { border-color: #7c83ff; }
+.drawer-auth-btn {
+  width: 100%; max-width: 260px;
+  padding: 10px; border-radius: 10px; border: none;
+  background: #7c83ff; color: #fff;
+  font-family: 'Rubik', sans-serif;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer;
+}
+.drawer-auth-btn:hover { background: #5c63d0; }
+.drawer-auth-error {
+  margin-top: 8px; font-size: 12px;
+  color: #ef4444; display: none;
+}
+
+/* Content inside drawer after auth */
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: none;
+}
+.drawer-body.active { display: block; }
+
+.drawer-nav {
+  display: flex; gap: 4px;
+  padding: 0 20px 0;
+  flex-shrink: 0;
+  display: none;
+}
+.drawer-nav.active { display: flex; }
+.drawer-nav-btn {
+  flex: 1; padding: 8px; border-radius: 8px; border: none;
+  font-family: 'Rubik', sans-serif; font-size: 12px; font-weight: 600;
+  cursor: pointer; background: transparent; color: #8b90b8;
+}
+.drawer-nav-btn:hover { background: #1a1f35; }
+.drawer-nav-btn.active { background: #7c83ff; color: #fff; }
+
+/* Drawer concept list */
+.dr-concept-list { display: flex; flex-direction: column; gap: 6px; }
+.dr-concept-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  background: #141828; border: 1px solid #252a42;
+  cursor: pointer; transition: all 0.15s; font-size: 13px;
+}
+.dr-concept-row:hover { border-color: #353b5a; background: #1a1f35; }
+.dr-zone-dot {
+  width: 6px; height: 28px; border-radius: 3px; flex-shrink: 0;
+}
+.dr-concept-name { flex: 1; font-weight: 600; }
+.dr-concept-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 6px;
+  background: #1a1f35; color: #8b90b8;
+}
+.dr-concept-badge.has { background: rgba(34,197,94,0.1); color: #22c55e; }
+
+/* Drawer editor */
+.dr-editor-back {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 10px; border-radius: 6px; border: none;
+  background: #1a1f35; color: #8b90b8;
+  font-family: 'Rubik', sans-serif; font-size: 11px;
+  cursor: pointer; margin-bottom: 12px;
+}
+.dr-editor-back:hover { color: #fff; }
+.dr-editor-title { font-size: 17px; font-weight: 800; margin-bottom: 2px; }
+.dr-editor-zone { font-size: 11px; color: #8b90b8; margin-bottom: 14px; }
+
+.dr-qcard {
+  background: #141828; border: 1px solid #252a42;
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
+}
+.dr-qcard-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.dr-qnum {
+  font-size: 10px; font-weight: 700; color: #7c83ff;
+  background: rgba(124,131,255,0.1);
+  padding: 2px 8px; border-radius: 5px;
+}
+.dr-qdel {
+  padding: 3px 8px; border-radius: 5px; border: none;
+  background: rgba(239,68,68,0.1); color: #ef4444;
+  font-family: 'Rubik', sans-serif; font-size: 10px;
+  cursor: pointer;
+}
+.dr-qdel:hover { background: rgba(239,68,68,0.2); }
+
+.dr-field { margin-bottom: 8px; }
+.dr-label {
+  font-size: 10px; font-weight: 600; color: #8b90b8;
+  margin-bottom: 3px; display: block;
+}
+.dr-input, .dr-textarea, .dr-select {
+  width: 100%; padding: 7px 10px; border-radius: 6px;
+  border: 1px solid #252a42; background: #1a1f35;
+  color: var(--text); font-family: 'Rubik', sans-serif;
+  font-size: 12px; outline: none; direction: rtl;
+}
+.dr-input:focus, .dr-textarea:focus { border-color: #7c83ff; }
+.dr-textarea { resize: vertical; min-height: 50px; }
+
+.dr-opts { display: flex; flex-direction: column; gap: 5px; }
+.dr-opt-row { display: flex; align-items: center; gap: 6px; }
+.dr-opt-radio {
+  appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid #252a42; background: #1a1f35;
+  cursor: pointer; flex-shrink: 0;
+}
+.dr-opt-radio:checked { border-color: #22c55e; background: #22c55e; }
+.dr-opt-input {
+  flex: 1; padding: 5px 8px; border-radius: 5px;
+  border: 1px solid #252a42; background: #1a1f35;
+  color: var(--text); font-family: 'Rubik', sans-serif;
+  font-size: 11px; outline: none; direction: rtl;
+}
+.dr-opt-input:focus { border-color: #7c83ff; }
+
+.dr-add-q {
+  width: 100%; padding: 10px; border-radius: 8px;
+  border: 2px dashed #252a42; background: transparent;
+  color: #8b90b8; font-family: 'Rubik', sans-serif;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  margin-top: 6px;
+}
+.dr-add-q:hover { border-color: #7c83ff; color: #7c83ff; }
+
+.dr-save-bar {
+  padding: 10px 0; display: flex; align-items: center;
+  justify-content: space-between; margin-top: 10px;
+  border-top: 1px solid #252a42; padding-top: 12px;
+}
+.dr-save-btn {
+  padding: 8px 22px; border-radius: 8px; border: none;
+  background: #22c55e; color: #fff;
+  font-family: 'Rubik', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+}
+.dr-save-btn:hover { filter: brightness(1.1); }
+.dr-save-btn:disabled { opacity: 0.5; }
+.dr-save-status { font-size: 11px; color: #4a4f70; }
+
+/* Drawer leaderboard */
+.dr-lb-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  font-size: 12px; margin-bottom: 4px;
+  background: #141828;
+}
+.dr-lb-row:nth-child(1) { background: rgba(240,192,64,0.06); }
+.dr-lb-rank {
+  width: 24px; height: 24px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800;
+  background: #1a1f35; color: #8b90b8;
+}
+.dr-lb-row:nth-child(1) .dr-lb-rank { background: var(--gold); color: #1a1200; }
+.dr-lb-row:nth-child(2) .dr-lb-rank { background: #a0a0a0; color: #1a1200; }
+.dr-lb-row:nth-child(3) .dr-lb-rank { background: #cd7f32; color: #1a1200; }
+.dr-lb-name { flex: 1; font-weight: 500; }
+.dr-lb-score { font-weight: 700; color: var(--gold); font-size: 11px; }
+.dr-lb-mode { font-size: 10px; color: #4a4f70; }
+</style>
+</head>
+<body>
+
+<!-- ADMIN FLOATING BUTTON -->
+<button class="admin-fab" onclick="openAdminDrawer()" title="ניהול">
+  <span class="admin-fab-icon">⚙️</span>
+  ניהול
+</button>
+
+<!-- ADMIN DRAWER OVERLAY -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeAdminDrawer()"></div>
+
+<!-- ADMIN DRAWER -->
+<div class="admin-drawer" id="adminDrawer">
+  <div class="drawer-header">
+    <div class="drawer-title">⚙️ ניהול</div>
+    <button class="drawer-close" onclick="closeAdminDrawer()">✕</button>
+  </div>
+
+  <!-- Auth screen -->
+  <div class="drawer-auth" id="drawerAuth">
+    <div class="drawer-auth-title">אזור ניהול</div>
+    <div class="drawer-auth-sub">הזן סיסמת מורה</div>
+    <input class="drawer-auth-input" id="drawerPassword" type="password" placeholder="סיסמה" onkeydown="if(event.key==='Enter')drawerVerifyAuth()">
+    <button class="drawer-auth-btn" onclick="drawerVerifyAuth()">כניסה</button>
+    <div class="drawer-auth-error" id="drawerAuthError">סיסמה שגויה</div>
+  </div>
+
+  <!-- Nav (shown after auth) -->
+  <div class="drawer-nav" id="drawerNav">
+    <button class="drawer-nav-btn active" data-dp="concepts" onclick="drawerSwitchTab('concepts')">📚 מושגים</button>
+    <button class="drawer-nav-btn" data-dp="leaderboard" onclick="drawerSwitchTab('leaderboard')">🏆 דירוג</button>
+  </div>
+
+  <!-- Body (shown after auth) -->
+  <div class="drawer-body" id="drawerBody">
+    <div id="drawerConceptsView"></div>
+    <div id="drawerLeaderboardView" style="display:none"></div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">טוען את המשחק...</div>
+</div>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay" style="display:none">
+  <div class="login-box">
+    <div style="font-size:48px;margin-bottom:8px">🎲</div>
+    <div class="login-title">הצטרפו למשחק</div>
+    <div class="login-sub">בחרו שם קבוצה כדי לשמור את ההתקדמות שלכם</div>
+
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="modeSolo" onclick="setMode('solo')">🧑 משתתף בודד</button>
+      <button class="mode-btn" id="modeGroup" onclick="setMode('group')">👥 משחק קבוצתי</button>
+    </div>
+
+    <input class="login-input" id="groupNameInput" placeholder="הקלידו שם (למשל: קבוצת האריות)" maxlength="30">
+    <div class="login-hint" id="loginHint">
+      שם ייחודי שתוכלו לחזור איתו בכל שלב.<br>
+      אם כבר שיחקתם — הקלידו את אותו שם כדי להמשיך מאיפה שעצרתם.
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="handleLogin()">התחל לשחק ▶</button>
+    <div class="login-error" id="loginError"></div>
+    <a href="index.html" class="login-back">→ חזרה לדף הראשי</a>
+  </div>
+</div>
+
+<!-- LEADERBOARD BANNER -->
+<div class="leaderboard-banner" id="leaderboardBanner">
+  <div class="lb-banner-title">🏆 מובילים</div>
+  <div class="lb-banner-row" id="lbBannerRow"></div>
+</div>
+
+<!-- HEADER -->
+<header class="game-header">
+  <div class="header-right">
+    <div class="game-title">🎲 בגרות מונופול</div>
+    <div class="game-sub" id="gameSub">תקשורת וחברה תשפ"ו · 33 מושגים</div>
+  </div>
+  <div class="header-controls">
+    <button class="hbtn" onclick="location.href='index.html'">🏠</button>
+    <button class="hbtn" id="visitedCount">0/33 ✓</button>
+  </div>
+</header>
+
+<!-- PLAYER PANEL -->
+<div class="player-panel" id="playerPanel"></div>
+
+<!-- SCENE -->
+<div class="scene-wrap" id="sceneWrap">
+  <div class="scene-inner">
+    <div class="board-3d" id="board3d">
+      <div class="board" id="board">
+        <div class="board-center">
+          <div class="center-title">תקשורת<br>וחברה</div>
+          <div class="center-sub">תשפ"ו 2026</div>
+          <div class="dice-area">
+            <div class="die" id="die1">🎲</div>
+            <div class="die" id="die2">🎲</div>
+          </div>
+          <button class="roll-btn" id="rollBtn" onclick="rollDice()">הטל קוביות</button>
+        </div>
+        <div class="pawns-layer" id="pawnsLayer"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls-panel">
+  <div class="turn-info">
+    <div class="turn-label">תור</div>
+    <div class="turn-value" id="turnInfo">טוען...</div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this&&!quizActive)closeModal()">
+  <div class="modal-box" id="modalBox" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="data.js"></script>
+<script src="board.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════
+// GAME STATE (Firebase-aware)
+// ═══════════════════════════════════════════════
+const PAWNS = ['🔴','🔵','🟢','🟡'];
+const PAWN_COLORS = ['#ef4444','#3b82f6','#22c55e','#eab308'];
+
+let players = [];
+let currentPlayer = 0;
+let visited = new Set();
+let rolling = false;
+let quizActive = false;
+let currentGroupName = '';
+let currentMode = 'solo';
+let ACTIVE_CONCEPTS = CONCEPTS; // will be replaced from Firebase
+
+// ═══════════════════════════════════════════════
+// INIT — Load concepts from Firebase, then show login
+// ═══════════════════════════════════════════════
+async function init() {
+  try {
+    ACTIVE_CONCEPTS = await DB.initConceptsIfEmpty(CONCEPTS);
+    // Rebuild board map with fresh concepts
+    rebuildBoardMap();
+  } catch (e) {
+    console.warn('Firebase load failed, using local data', e);
+  }
+
+  document.getElementById('loadingOverlay').style.display = 'none';
+
+  // Check if returning player
+  const saved = localStorage.getItem('monopoly_group');
+  if (saved) {
+    try {
+      const data = await DB.getGroupData(saved);
+      if (data) {
+        document.getElementById('groupNameInput').value = saved;
+      }
+    } catch(e) {}
+  }
+
+  document.getElementById('loginOverlay').style.display = 'flex';
+}
+
+function rebuildBoardMap() {
+  let cIdx = 0;
+  for (let i = 0; i < NUM_POSITIONS; i++) {
+    if (!CORNER_POS.includes(i)) {
+      BOARD_MAP[i] = { type: 'concept', concept: ACTIVE_CONCEPTS[cIdx % ACTIVE_CONCEPTS.length] };
+      cIdx++;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('modeSolo').classList.toggle('active', mode === 'solo');
+  document.getElementById('modeGroup').classList.toggle('active', mode === 'group');
+  document.getElementById('loginHint').innerHTML = mode === 'solo'
+    ? 'שם ייחודי שתוכלו לחזור איתו בכל שלב.<br>אם כבר שיחקתם — הקלידו את אותו שם כדי להמשיך מאיפה שעצרתם.'
+    : 'כל חברי הקבוצה ישחקו תחת אותו שם.<br>ניקוד ומיקום משותפים לכל הקבוצה.';
+}
+
+async function handleLogin() {
+  const name = document.getElementById('groupNameInput').value.trim();
+  if (!name) {
+    showLoginError('נא להזין שם');
+    return;
+  }
+  if (name.length < 2) {
+    showLoginError('שם קצר מדי — לפחות 2 תווים');
+    return;
+  }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'מתחבר...';
+
+  try {
+    const data = await DB.registerGroup(name, currentMode);
+    currentGroupName = name;
+    localStorage.setItem('monopoly_group', name);
+
+    // Restore state
+    players = [{
+      name: name,
+      pawn: PAWNS[0],
+      color: PAWN_COLORS[0],
+      pos: data.pos || 0,
+      score: data.score || 0
+    }];
+    currentPlayer = 0;
+    visited = new Set(data.visited || [0]);
+
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('leaderboardBanner').style.display = 'block';
+    document.getElementById('gameSub').textContent = `${currentMode === 'solo' ? '🧑' : '👥'} ${name} · תקשורת וחברה`;
+
+    renderBoard();
+    renderPlayers();
+    renderPawns();
+    updateTurnInfo();
+    updateVisitedCount();
+    startLeaderboardUpdates();
+
+  } catch (e) {
+    showLoginError('שגיאה בהתחברות. נסו שוב.');
+    console.error(e);
+  }
+  btn.disabled = false;
+  btn.textContent = 'התחל לשחק ▶';
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+// ═══════════════════════════════════════════════
+// SAVE PROGRESS
+// ═══════════════════════════════════════════════
+async function saveProgress() {
+  if (!currentGroupName) return;
+  const p = players[0];
+  try {
+    await DB.updateGroupProgress(currentGroupName, {
+      pos: p.pos,
+      score: p.score,
+      visited: Array.from(visited),
+      mode: currentMode
+    });
+  } catch (e) {
+    console.warn('Save failed', e);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════════
+function startLeaderboardUpdates() {
+  DB.onLeaderboardChange(groups => {
+    const row = document.getElementById('lbBannerRow');
+    row.innerHTML = groups.map((g, i) => {
+      const isMe = g.name === currentGroupName;
+      return `<div class="lb-chip ${isMe ? 'me' : ''}">
+        <span class="lb-chip-rank">#${i + 1}</span>
+        <span class="lb-chip-name">${g.name}</span>
+        <span class="lb-chip-score">⭐${g.score || 0}</span>
+      </div>`;
+    }).join('');
+  });
+}
+
+// ═══════════════════════════════════════════════
+// RENDER BOARD
+// ═══════════════════════════════════════════════
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.querySelectorAll('.cell').forEach(e => e.remove());
+
+  for (let pos = 0; pos < NUM_POSITIONS; pos++) {
+    const cell = document.createElement('div');
+    const gp = getGridPos(pos);
+    cell.style.gridRow = gp.row;
+    cell.style.gridColumn = gp.col;
+    cell.dataset.pos = pos;
+
+    const data = BOARD_MAP[pos];
+    if (data.type === 'corner') {
+      cell.className = 'cell corner';
+      cell.innerHTML = `<div class="corner-icon">${data.icon}</div><div class="corner-label">${data.label}</div>`;
+    } else {
+      const c = data.concept;
+      const color = ZONE_COLORS[c.zone];
+      let edgeClass = '';
+      if (pos >= 11 && pos <= 19) edgeClass = 'left-col';
+      else if (pos >= 20 && pos <= 30) edgeClass = 'top-row';
+      else if (pos >= 31 && pos <= 39) edgeClass = 'right-col';
+      cell.className = `cell ${edgeClass} ${visited.has(pos) ? 'visited' : ''}`;
+      cell.style.background = color + '18';
+      cell.innerHTML = `
+        <div class="cell-color-bar" style="background:${color}"></div>
+        <div class="cell-name">${c.name}</div>
+        <div class="cell-num">${pos}</div>`;
+      cell.addEventListener('click', () => openConceptModal(pos));
+    }
+    board.appendChild(cell);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// RENDER PLAYERS
+// ═══════════════════════════════════════════════
+function renderPlayers() {
+  const panel = document.getElementById('playerPanel');
+  panel.innerHTML = players.map((p, i) => `
+    <div class="player-card ${i === currentPlayer ? 'active-player' : ''}">
+      <div class="pawn-icon">${p.pawn}</div>
+      <div>
+        <div class="p-name">${p.name}</div>
+        <div class="p-pos">משבצת ${p.pos}</div>
+        <div class="p-score">⭐ ${p.score}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// RENDER PAWNS
+// ═══════════════════════════════════════════════
+function renderPawns() {
+  const layer = document.getElementById('pawnsLayer');
+  layer.innerHTML = '';
+  players.forEach((p, i) => {
+    const { x, y } = getCellPixelCenter(p.pos);
+    const offset = (i - (players.length - 1) / 2) * 10;
+    const pawn = document.createElement('div');
+    pawn.className = 'pawn';
+    pawn.id = 'pawn' + i;
+    pawn.style.left = (x + offset - 7) + 'px';
+    pawn.style.top = (y - 24 + (i * 3)) + 'px';
+    pawn.innerHTML = `
+      <div class="pawn-body" style="background:${p.color}"></div>
+      <div class="pawn-stem"></div>
+      <div class="pawn-label">${p.pawn}</div>`;
+    layer.appendChild(pawn);
+  });
+}
+
+function animatePawn(playerIdx, newPos) {
+  return new Promise(resolve => {
+    const { x, y } = getCellPixelCenter(newPos);
+    const offset = (playerIdx - (players.length - 1) / 2) * 10;
+    const pawn = document.getElementById('pawn' + playerIdx);
+    if (pawn) {
+      pawn.style.left = (x + offset - 7) + 'px';
+      pawn.style.top = (y - 24 + (playerIdx * 3)) + 'px';
+    }
+    setTimeout(resolve, 650);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// DICE
+// ═══════════════════════════════════════════════
+const DICE_FACES = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+
+async function rollDice() {
+  if (rolling || quizActive) return;
+  rolling = true;
+  document.getElementById('rollBtn').disabled = true;
+
+  const d1 = document.getElementById('die1');
+  const d2 = document.getElementById('die2');
+  d1.classList.add('rolling');
+  d2.classList.add('rolling');
+
+  let ticks = 0;
+  const interval = setInterval(() => {
+    d1.textContent = DICE_FACES[Math.floor(Math.random() * 6)];
+    d2.textContent = DICE_FACES[Math.floor(Math.random() * 6)];
+    ticks++;
+    if (ticks > 12) clearInterval(interval);
+  }, 60);
+
+  await new Promise(r => setTimeout(r, 800));
+
+  const r1 = Math.floor(Math.random() * 6) + 1;
+  const r2 = Math.floor(Math.random() * 6) + 1;
+  d1.classList.remove('rolling');
+  d2.classList.remove('rolling');
+  d1.textContent = DICE_FACES[r1 - 1];
+  d2.textContent = DICE_FACES[r2 - 1];
+
+  const total = r1 + r2;
+  const p = players[currentPlayer];
+  const oldPos = p.pos;
+  p.pos = (p.pos + total) % NUM_POSITIONS;
+
+  for (let step = 1; step <= total; step++) {
+    const stepPos = (oldPos + step) % NUM_POSITIONS;
+    await animatePawn(currentPlayer, stepPos);
+  }
+
+  renderPlayers();
+  visited.add(p.pos);
+  updateVisitedCount();
+  updateBoardVisited();
+
+  const cell = BOARD_MAP[p.pos];
+  if (cell.type === 'corner') {
+    handleCorner(p.pos);
+    rolling = false;
+    saveProgress();
+  } else {
+    rolling = false;
+    openConceptModal(p.pos, true);
+  }
+  document.getElementById('rollBtn').disabled = false;
+}
+
+function handleCorner(pos) {
+  const p = players[currentPlayer];
+  const msgs = {
+    0: 'חזרת לנקודת ההתחלה! 🚀',
+    10: `🌟 בונוס! ${p.name} מקבל +5 נקודות!`,
+    20: '☕ הפסקה — שאלו שאלה מכל מושג שתרצו',
+    30: '🎯 מזל! +3 נקודות!'
+  };
+  if (pos === 10) p.score += 5;
+  if (pos === 30) p.score += 3;
+  showToast(msgs[pos] || '');
+  renderPlayers();
+}
+
+function updateTurnInfo() {
+  if (!players.length) return;
+  const p = players[currentPlayer];
+  document.getElementById('turnInfo').textContent = `${p.pawn} ${p.name} — משבצת ${p.pos}`;
+}
+
+function updateVisitedCount() {
+  const conceptCount = Array.from(visited).filter(pos => BOARD_MAP[pos]?.type === 'concept').length;
+  document.getElementById('visitedCount').textContent = conceptCount + '/33 ✓';
+}
+
+function updateBoardVisited() {
+  document.querySelectorAll('.cell[data-pos]').forEach(cell => {
+    const pos = parseInt(cell.dataset.pos);
+    if (visited.has(pos) && BOARD_MAP[pos]?.type === 'concept') {
+      cell.classList.add('visited');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════
+let currentConcept = null;
+let autoQuizAfterDef = false;
+
+function openConceptModal(pos, autoQuiz = false) {
+  const cell = BOARD_MAP[pos];
+  if (!cell || cell.type !== 'concept') return;
+  const c = cell.concept;
+  currentConcept = c;
+  autoQuizAfterDef = autoQuiz;
+  const color = ZONE_COLORS[c.zone];
+
+  document.getElementById('modalContent').innerHTML = `
+    <div><span class="modal-zone-badge" style="background:${color}22;color:${color}">${ZONE_NAMES[c.zone]}</span></div>
+    <div class="modal-title">${c.name}</div>
+    <div class="modal-short">${c.short}</div>
+    <div class="modal-def">${c.def}</div>
+    <button class="modal-play-btn" style="background:linear-gradient(135deg,${color}cc,${color});color:#000" onclick="startQuiz()">
+      🎮 התחל ${c.quiz ? c.quiz.length : 5} שאלות
+    </button>`;
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() {
+  if (quizActive) return;
+  document.getElementById('modal').style.display = 'none';
+  currentConcept = null;
+  saveProgress();
+}
+
+// ═══════════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════════
+let qState = null;
+
+function startQuiz() {
+  if (!currentConcept || !currentConcept.quiz || !currentConcept.quiz.length) return;
+  quizActive = true;
+  const totalQ = currentConcept.quiz.length;
+  qState = { concept: currentConcept, qi: 0, score: 0, total: totalQ, dots: new Array(totalQ).fill('') };
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const { concept, qi, dots, total } = qState;
+  const color = ZONE_COLORS[concept.zone];
+  const q = concept.quiz[qi];
+
+  const dotsHtml = dots.map((d, i) =>
+    `<div class="qdot ${i < qi ? d : i === qi ? 'current' : ''}"></div>`
+  ).join('');
+
+  document.getElementById('modalContent').innerHTML = `
+    <div class="quiz-header">
+      <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:8px">${concept.name}</div>
+      <div class="quiz-prog-dots">${dotsHtml}</div>
+      <div style="font-size:11px;color:#666;margin-bottom:8px">שאלה ${qi + 1} / ${total}</div>
+      <div class="q-level">${q.level}</div>
+      <div class="q-text">${q.q}</div>
+    </div>
+    <div class="q-opts">
+      ${q.opts.map((o, i) => `<button class="q-opt" onclick="answerQ(${i})">${o}</button>`).join('')}
+    </div>
+    <div class="q-feedback" id="qfb"></div>
+    <button class="q-next" id="qnext" onclick="nextQ()">
+      ${qi < total - 1 ? 'שאלה הבאה ›' : 'תוצאות ›'}
+    </button>`;
+}
+
+function answerQ(chosen) {
+  const { concept, qi } = qState;
+  const q = concept.quiz[qi];
+  const opts = document.querySelectorAll('.q-opt');
+  opts.forEach(b => b.disabled = true);
+
+  const correct = chosen === q.ans;
+  if (correct) qState.score++;
+  qState.dots[qi] = correct ? 'correct' : 'wrong';
+
+  opts[q.ans].classList.add('correct');
+  if (!correct) opts[chosen].classList.add('wrong');
+
+  const fb = document.getElementById('qfb');
+  fb.className = 'q-feedback show ' + (correct ? 'correct' : 'wrong');
+  fb.textContent = (correct ? '✓ נכון! ' : '✗ לא נכון. ') + q.explain;
+  document.getElementById('qnext').classList.add('show');
+}
+
+function nextQ() {
+  qState.qi++;
+  if (qState.qi >= qState.total) showResult();
+  else renderQuestion();
+}
+
+function showResult() {
+  const { concept, score, dots, total } = qState;
+  const color = ZONE_COLORS[concept.zone];
+  const pct = Math.round(score / total * 100);
+  const p = players[currentPlayer];
+
+  const points = score * 2;
+  if (p) p.score += points;
+
+  const msg = score === total ? 'מושלם! 🏆' : score >= Math.ceil(total * 0.6) ? 'כל הכבוד! 💪' : 'נסה שוב 📚';
+  const dotsHtml = dots.map(d => `<div class="qdot ${d}"></div>`).join('');
+
+  document.getElementById('modalContent').innerHTML = `
+    <div class="quiz-result">
+      <div class="quiz-prog-dots" style="margin-bottom:16px">${dotsHtml}</div>
+      <div class="score-hexagon" style="--pct:${pct}%">${score}/${total}</div>
+      <div class="result-msg">${msg}</div>
+      <div class="result-sub">הרווחת <strong style="color:${color}">+${points} נקודות</strong></div>
+      <div class="result-btns">
+        <button class="r-btn primary" onclick="retryQuiz()">נסה שוב</button>
+        <button class="r-btn secondary" onclick="finishQuiz()">סיים</button>
+      </div>
+    </div>`;
+
+  renderPlayers();
+  quizActive = false;
+  saveProgress();
+}
+
+function retryQuiz() {
+  quizActive = true;
+  qState.qi = 0;
+  qState.score = 0;
+  qState.dots = new Array(qState.total).fill('');
+  renderQuestion();
+}
+
+function finishQuiz() {
+  quizActive = false;
+  document.getElementById('modal').style.display = 'none';
+  renderPlayers();
+  updateTurnInfo();
+  saveProgress();
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// ═══════════════════════════════════════════════
+// BOARD PAN & SCROLL
+// ═══════════════════════════════════════════════
+(function() {
+  const scene = document.getElementById('sceneWrap');
+  const PAN_SPEED = 40; // px per arrow key press
+
+  // --- Mouse drag to pan ---
+  let isDragging = false;
+  let startX, startY, scrollLeftStart, scrollTopStart;
+
+  scene.addEventListener('mousedown', e => {
+    // Don't hijack clicks on buttons/dice/cells
+    if (e.target.closest('.die, .roll-btn, .cell, button')) return;
+    isDragging = true;
+    scene.style.cursor = 'grabbing';
+    startX = e.pageX;
+    startY = e.pageY;
+    scrollLeftStart = scene.scrollLeft;
+    scrollTopStart = scene.scrollTop;
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    const dx = e.pageX - startX;
+    const dy = e.pageY - startY;
+    scene.scrollLeft = scrollLeftStart - dx;
+    scene.scrollTop = scrollTopStart - dy;
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      scene.style.cursor = 'grab';
+    }
+  });
+
+  // --- Mouse wheel to scroll (vertical → vertical, shift+wheel or horizontal wheel → horizontal) ---
+  scene.addEventListener('wheel', e => {
+    // If the scene can scroll in the direction, consume the event
+    const canScrollX = scene.scrollWidth > scene.clientWidth;
+    const canScrollY = scene.scrollHeight > scene.clientHeight;
+    if (!canScrollX && !canScrollY) return;
+
+    e.preventDefault();
+    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      scene.scrollLeft += (e.deltaX || e.deltaY);
+    } else {
+      scene.scrollTop += e.deltaY;
+      // Also allow horizontal scroll from vertical wheel when there's more horizontal room
+      if (canScrollX && !canScrollY) {
+        scene.scrollLeft += e.deltaY;
+      }
+    }
+  }, { passive: false });
+
+  // --- Arrow keys to pan ---
+  document.addEventListener('keydown', e => {
+    // Don't hijack when typing in inputs
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        scene.scrollBy({ left: -PAN_SPEED, behavior: 'smooth' });
+        e.preventDefault();
+        break;
+      case 'ArrowRight':
+        scene.scrollBy({ left: PAN_SPEED, behavior: 'smooth' });
+        e.preventDefault();
+        break;
+      case 'ArrowUp':
+        scene.scrollBy({ top: -PAN_SPEED, behavior: 'smooth' });
+        e.preventDefault();
+        break;
+      case 'ArrowDown':
+        scene.scrollBy({ top: PAN_SPEED, behavior: 'smooth' });
+        e.preventDefault();
+        break;
+    }
+  });
+
+  // --- Touch drag (mobile) ---
+  let touchStartX, touchStartY;
+  scene.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].pageX;
+      touchStartY = e.touches[0].pageY;
+    }
+  }, { passive: true });
+
+  scene.addEventListener('touchmove', e => {
+    if (e.touches.length === 1) {
+      const dx = touchStartX - e.touches[0].pageX;
+      const dy = touchStartY - e.touches[0].pageY;
+      scene.scrollLeft += dx;
+      scene.scrollTop += dy;
+      touchStartX = e.touches[0].pageX;
+      touchStartY = e.touches[0].pageY;
+    }
+  }, { passive: true });
+
+  // --- Center board on load ---
+  function centerBoard() {
+    const extraW = scene.scrollWidth - scene.clientWidth;
+    const extraH = scene.scrollHeight - scene.clientHeight;
+    if (extraW > 0) scene.scrollLeft = extraW / 2;
+    if (extraH > 0) scene.scrollTop = extraH / 2;
+  }
+  window.addEventListener('load', centerBoard);
+  window.addEventListener('resize', centerBoard);
+})();
+
+// ═══════════════════════════════════════════════
+// ADMIN DRAWER
+// ═══════════════════════════════════════════════
+let drawerAuthed = false;
+let drawerEditingConcept = null;
+let drawerEditingQuiz = [];
+let drawerTab = 'concepts';
+
+function openAdminDrawer() {
+  document.getElementById('adminDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  if (drawerAuthed) {
+    if (drawerTab === 'leaderboard') drawerLoadLeaderboard();
+    else drawerLoadConcepts();
+  }
+}
+
+function closeAdminDrawer() {
+  document.getElementById('adminDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+
+async function drawerVerifyAuth() {
+  const pw = document.getElementById('drawerPassword').value;
+  try {
+    const ok = await DB.verifyAdmin(pw);
+    if (ok) {
+      drawerAuthed = true;
+      document.getElementById('drawerAuth').style.display = 'none';
+      document.getElementById('drawerNav').classList.add('active');
+      document.getElementById('drawerBody').classList.add('active');
+      drawerLoadConcepts();
+    } else {
+      const el = document.getElementById('drawerAuthError');
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 3000);
+    }
+  } catch (e) {
+    alert('שגיאת חיבור');
+  }
+}
+
+function drawerSwitchTab(tab) {
+  drawerTab = tab;
+  document.querySelectorAll('.drawer-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.dp === tab));
+  document.getElementById('drawerConceptsView').style.display = tab === 'concepts' ? '' : 'none';
+  document.getElementById('drawerLeaderboardView').style.display = tab === 'leaderboard' ? '' : 'none';
+  if (tab === 'leaderboard') drawerLoadLeaderboard();
+  else drawerLoadConcepts();
+}
+
+// --- Concepts list ---
+function drawerLoadConcepts() {
+  const container = document.getElementById('drawerConceptsView');
+  container.innerHTML = '<div class="dr-concept-list">' + ACTIVE_CONCEPTS.map((c, i) => {
+    const color = ZONE_COLORS[c.zone] || '#888';
+    const qCount = c.quiz ? c.quiz.length : 0;
+    return `<div class="dr-concept-row" onclick="drawerOpenEditor(${i})">
+      <div class="dr-zone-dot" style="background:${color}"></div>
+      <div class="dr-concept-name">${c.name}</div>
+      <div class="dr-concept-badge ${qCount ? 'has' : ''}">${qCount}</div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// --- Editor ---
+function drawerOpenEditor(idx) {
+  drawerEditingConcept = ACTIVE_CONCEPTS[idx];
+  drawerEditingQuiz = JSON.parse(JSON.stringify(drawerEditingConcept.quiz || []));
+  drawerRenderEditor();
+}
+
+function drawerBackToList() {
+  drawerEditingConcept = null;
+  drawerLoadConcepts();
+}
+
+function drawerRenderEditor() {
+  const c = drawerEditingConcept;
+  const color = ZONE_COLORS[c.zone] || '#888';
+  const container = document.getElementById('drawerConceptsView');
+
+  let html = `
+    <button class="dr-editor-back" onclick="drawerBackToList()">→ חזרה</button>
+    <div class="dr-editor-title">${c.name}</div>
+    <div class="dr-editor-zone"><span style="color:${color}">● ${ZONE_NAMES[c.zone] || ''}</span></div>
+    <div id="drQuestionsContainer">`;
+
+  html += drawerEditingQuiz.map((q, qi) => drawerQuestionCard(q, qi)).join('');
+
+  html += `</div>
+    <button class="dr-add-q" onclick="drawerAddQ()">+ הוסף שאלה</button>
+    <div class="dr-save-bar">
+      <span class="dr-save-status" id="drSaveStatus"></span>
+      <button class="dr-save-btn" id="drSaveBtn" onclick="drawerSaveQuestions()">💾 שמור</button>
+    </div>`;
+
+  container.innerHTML = html;
+}
+
+function drawerQuestionCard(q, qi) {
+  const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return `
+    <div class="dr-qcard" id="drqcard${qi}">
+      <div class="dr-qcard-head">
+        <span class="dr-qnum">שאלה ${qi + 1}</span>
+        <button class="dr-qdel" onclick="drawerDeleteQ(${qi})">🗑️</button>
+      </div>
+      <div class="dr-field">
+        <label class="dr-label">רמה</label>
+        <select class="dr-select" onchange="drawerEditingQuiz[${qi}].level=this.value">
+          ${['הבנה','יישום','ניתוח','הערכה'].map(l => `<option value="${l}" ${q.level===l?'selected':''}>${l}</option>`).join('')}
+        </select>
+      </div>
+      <div class="dr-field">
+        <label class="dr-label">שאלה</label>
+        <textarea class="dr-textarea" onchange="drawerEditingQuiz[${qi}].q=this.value">${escHtml(q.q)}</textarea>
+      </div>
+      <div class="dr-field">
+        <label class="dr-label">תשובות (סמן נכונה)</label>
+        <div class="dr-opts">
+          ${q.opts.map((o, oi) => `
+            <div class="dr-opt-row">
+              <input type="radio" class="dr-opt-radio" name="drans${qi}" value="${oi}"
+                ${q.ans===oi?'checked':''}
+                onchange="drawerEditingQuiz[${qi}].ans=${oi}">
+              <input class="dr-opt-input" value="${escHtml(o)}"
+                onchange="drawerEditingQuiz[${qi}].opts[${oi}]=this.value">
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="dr-field">
+        <label class="dr-label">הסבר</label>
+        <textarea class="dr-textarea" onchange="drawerEditingQuiz[${qi}].explain=this.value">${escHtml(q.explain||'')}</textarea>
+      </div>
+    </div>`;
+}
+
+function drawerAddQ() {
+  drawerEditingQuiz.push({ level:'הבנה', q:'', opts:['','','',''], ans:0, explain:'' });
+  drawerRenderEditor();
+  const last = document.getElementById('drqcard' + (drawerEditingQuiz.length - 1));
+  if (last) last.scrollIntoView({ behavior: 'smooth' });
+}
+
+function drawerDeleteQ(idx) {
+  if (!confirm(`למחוק שאלה ${idx + 1}?`)) return;
+  drawerEditingQuiz.splice(idx, 1);
+  drawerRenderEditor();
+}
+
+async function drawerSaveQuestions() {
+  if (!drawerEditingConcept) return;
+  const btn = document.getElementById('drSaveBtn');
+  const status = document.getElementById('drSaveStatus');
+  btn.disabled = true;
+  status.textContent = 'שומר...';
+  status.style.color = '';
+
+  try {
+    for (let i = 0; i < drawerEditingQuiz.length; i++) {
+      const q = drawerEditingQuiz[i];
+      if (!q.q.trim()) { status.textContent = `שאלה ${i+1}: חסר טקסט`; status.style.color = '#ef4444'; btn.disabled = false; return; }
+      if (q.opts.some(o => !o.trim())) { status.textContent = `שאלה ${i+1}: חסרות תשובות`; status.style.color = '#ef4444'; btn.disabled = false; return; }
+    }
+
+    await DB.saveConceptQuiz(drawerEditingConcept.id, drawerEditingQuiz);
+    drawerEditingConcept.quiz = JSON.parse(JSON.stringify(drawerEditingQuiz));
+
+    // Also update ACTIVE_CONCEPTS
+    const idx = ACTIVE_CONCEPTS.findIndex(c => c.id === drawerEditingConcept.id);
+    if (idx !== -1) ACTIVE_CONCEPTS[idx].quiz = drawerEditingConcept.quiz;
+
+    status.textContent = '✓ נשמר!';
+    status.style.color = '#22c55e';
+    setTimeout(() => { status.textContent = ''; status.style.color = ''; }, 3000);
+  } catch (e) {
+    status.textContent = 'שגיאה';
+    status.style.color = '#ef4444';
+    console.error(e);
+  }
+  btn.disabled = false;
+}
+
+// --- Leaderboard ---
+async function drawerLoadLeaderboard() {
+  const container = document.getElementById('drawerLeaderboardView');
+  container.innerHTML = '<div style="text-align:center;color:#4a4f70;padding:20px">טוען...</div>';
+  try {
+    const groups = await DB.getLeaderboard(30);
+    if (!groups.length) {
+      container.innerHTML = '<div style="text-align:center;color:#4a4f70;padding:30px">אין קבוצות עדיין</div>';
+      return;
+    }
+    container.innerHTML = groups.map((g, i) => {
+      const mode = g.mode === 'group' ? '👥' : '🧑';
+      return `<div class="dr-lb-row">
+        <div class="dr-lb-rank">${i + 1}</div>
+        <div class="dr-lb-name">${g.name}</div>
+        <div class="dr-lb-mode">${mode}</div>
+        <div class="dr-lb-score">⭐ ${g.score || 0}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px">שגיאה בטעינה</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

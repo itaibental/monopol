@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בגרות מונופול — אזור ניהול</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0f1a;
+  --surface: #141828;
+  --surface2: #1a1f35;
+  --border: #252a42;
+  --border-hover: #353b5a;
+  --gold: #f0c040;
+  --gold2: #d4a017;
+  --accent: #7c83ff;
+  --accent2: #5c63d0;
+  --text: #e8e4d8;
+  --text2: #8b90b8;
+  --text3: #4a4f70;
+  --green: #22c55e;
+  --red: #ef4444;
+  --orange: #f59e0b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Rubik', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text);
+}
+
+/* ═══════════ AUTH ═══════════ */
+.auth-overlay {
+  position: fixed; inset: 0; background: var(--bg);
+  z-index: 600; display: flex;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.auth-box {
+  background: var(--surface);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 32px 28px; width: 100%; max-width: 380px;
+  text-align: center;
+}
+.auth-title { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
+.auth-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+.auth-input {
+  width: 100%; padding: 12px 16px; border-radius: 12px;
+  border: 1.5px solid var(--border); background: var(--surface2);
+  color: var(--text); font-family: 'Rubik', sans-serif;
+  font-size: 15px; text-align: center; outline: none;
+  margin-bottom: 12px;
+}
+.auth-input:focus { border-color: var(--accent); }
+.auth-btn {
+  width: 100%; padding: 12px; border-radius: 12px; border: none;
+  background: var(--accent); color: #fff;
+  font-family: 'Rubik', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer;
+}
+.auth-btn:hover { background: var(--accent2); }
+.auth-error { margin-top: 10px; font-size: 12px; color: var(--red); display: none; }
+.auth-back { display: inline-block; margin-top: 14px; font-size: 12px; color: var(--text3); text-decoration: none; }
+.auth-back:hover { color: var(--text); }
+.auth-hint { font-size: 11px; color: var(--text3); margin-bottom: 16px; }
+
+/* ═══════════ LAYOUT ═══════════ */
+.admin-app { display: none; }
+.admin-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.admin-logo { font-size: 16px; font-weight: 800; color: var(--accent); }
+.admin-logo span { color: var(--text3); font-weight: 400; font-size: 12px; margin-right: 8px; }
+.admin-nav { display: flex; gap: 4px; }
+.nav-btn {
+  padding: 7px 14px; border-radius: 8px; border: none;
+  font-family: 'Rubik', sans-serif; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+  background: transparent; color: var(--text2);
+}
+.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn.active { background: var(--accent); color: #fff; }
+.admin-home {
+  padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--text2);
+  font-family: 'Rubik', sans-serif; font-size: 12px;
+  cursor: pointer; text-decoration: none;
+}
+.admin-home:hover { border-color: var(--border-hover); color: var(--text); }
+
+/* ═══════════ PANELS ═══════════ */
+.panel { display: none; padding: 20px; max-width: 900px; margin: 0 auto; }
+.panel.active { display: block; }
+.panel-title {
+  font-size: 20px; font-weight: 800; margin-bottom: 4px;
+}
+.panel-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+
+/* ═══════════ CONCEPTS LIST ═══════════ */
+.concept-list { display: flex; flex-direction: column; gap: 8px; }
+.concept-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer; transition: all 0.15s;
+}
+.concept-row:hover { border-color: var(--border-hover); background: var(--surface2); }
+.concept-zone {
+  width: 8px; height: 36px; border-radius: 4px;
+  flex-shrink: 0;
+}
+.concept-info { flex: 1; }
+.concept-name { font-size: 14px; font-weight: 700; }
+.concept-short { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.concept-badge {
+  padding: 3px 10px; border-radius: 8px;
+  font-size: 11px; font-weight: 600;
+  background: var(--surface2); color: var(--text2);
+}
+.concept-badge.has-q { background: rgba(34,197,94,0.1); color: var(--green); }
+
+/* ═══════════ EDITOR ═══════════ */
+.editor-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 8px; border: none;
+  background: var(--surface2); color: var(--text2);
+  font-family: 'Rubik', sans-serif; font-size: 12px;
+  cursor: pointer; margin-bottom: 16px;
+}
+.editor-back:hover { color: var(--text); }
+.editor-concept-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.editor-concept-zone { font-size: 12px; color: var(--text2); margin-bottom: 20px; }
+
+.question-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.question-card .q-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.q-number {
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  background: rgba(124,131,255,0.1);
+  padding: 3px 10px; border-radius: 6px;
+}
+.q-actions { display: flex; gap: 6px; }
+.q-action-btn {
+  padding: 4px 10px; border-radius: 6px; border: none;
+  font-family: 'Rubik', sans-serif; font-size: 11px;
+  cursor: pointer; transition: all 0.15s;
+}
+.q-action-btn.delete { background: rgba(239,68,68,0.1); color: var(--red); }
+.q-action-btn.delete:hover { background: rgba(239,68,68,0.2); }
+
+.field-group { margin-bottom: 10px; }
+.field-label {
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  margin-bottom: 4px; display: block;
+}
+.field-input, .field-textarea, .field-select {
+  width: 100%; padding: 8px 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text); font-family: 'Rubik', sans-serif;
+  font-size: 13px; outline: none; direction: rtl;
+}
+.field-input:focus, .field-textarea:focus { border-color: var(--accent); }
+.field-textarea { resize: vertical; min-height: 60px; }
+
+.opts-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+.opt-row {
+  display: flex; align-items: center; gap: 6px;
+}
+.opt-radio {
+  appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--border); background: var(--surface2);
+  cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+}
+.opt-radio:checked { border-color: var(--green); background: var(--green); }
+.opt-input {
+  flex: 1; padding: 6px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text); font-family: 'Rubik', sans-serif;
+  font-size: 12px; outline: none; direction: rtl;
+}
+.opt-input:focus { border-color: var(--accent); }
+
+.add-question-btn {
+  width: 100%; padding: 12px; border-radius: 12px;
+  border: 2px dashed var(--border);
+  background: transparent; color: var(--text2);
+  font-family: 'Rubik', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; margin-top: 8px;
+}
+.add-question-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.save-bar {
+  position: sticky; bottom: 0;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+  margin-top: 16px; border-radius: 12px;
+}
+.save-btn {
+  padding: 10px 28px; border-radius: 10px; border: none;
+  background: var(--green); color: #fff;
+  font-family: 'Rubik', sans-serif; font-size: 14px; font-weight: 700;
+  cursor: pointer;
+}
+.save-btn:hover { filter: brightness(1.1); }
+.save-btn:disabled { opacity: 0.5; cursor: default; }
+.save-status { font-size: 12px; color: var(--text3); }
+
+/* ═══════════ LEADERBOARD ═══════════ */
+.lb-table {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+}
+.lb-table th {
+  text-align: right; font-size: 11px; font-weight: 700;
+  color: var(--text3); padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.lb-table td {
+  padding: 10px 12px; font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.lb-table tr:hover td { background: var(--surface); }
+.lb-rank-cell {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px;
+  background: var(--surface2); color: var(--text2);
+}
+.lb-rank-cell.r1 { background: var(--gold); color: #1a1200; }
+.lb-rank-cell.r2 { background: #a0a0a0; color: #1a1200; }
+.lb-rank-cell.r3 { background: #cd7f32; color: #1a1200; }
+.lb-group-name { font-weight: 600; }
+.lb-mode { font-size: 11px; color: var(--text3); }
+.lb-score-val { font-weight: 700; color: var(--gold); }
+.lb-date { font-size: 11px; color: var(--text3); }
+
+.reset-all-btn {
+  margin-top: 16px; padding: 8px 16px; border-radius: 8px;
+  border: 1px solid rgba(239,68,68,0.2); background: transparent;
+  color: var(--red); font-family: 'Rubik', sans-serif;
+  font-size: 12px; cursor: pointer;
+}
+.reset-all-btn:hover { background: rgba(239,68,68,0.08); }
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media (max-width: 600px) {
+  .opts-grid { grid-template-columns: 1fr; }
+  .admin-nav { gap: 2px; }
+  .nav-btn { padding: 6px 10px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div style="font-size:40px;margin-bottom:8px">⚙️</div>
+    <div class="auth-title">אזור ניהול</div>
+    <div class="auth-sub">הזן סיסמת מורה כדי לגשת לניהול המשחק</div>
+    <div class="auth-hint">סיסמה ראשונית: ibt1234</div>
+    <input class="auth-input" id="authPassword" type="password" placeholder="סיסמה" onkeydown="if(event.key==='Enter')verifyAuth()">
+    <button class="auth-btn" onclick="verifyAuth()">כניסה</button>
+    <div class="auth-error" id="authError">סיסמה שגויה</div>
+    <a href="index.html" class="auth-back">→ חזרה לדף הראשי</a>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div class="admin-app" id="adminApp">
+  <!-- Header -->
+  <div class="admin-header">
+    <div>
+      <div class="admin-logo">⚙️ ניהול משחק <span>בגרות מונופול</span></div>
+    </div>
+    <div class="admin-nav">
+      <button class="nav-btn active" data-panel="concepts" onclick="switchPanel('concepts')">📚 מושגים</button>
+      <button class="nav-btn" data-panel="leaderboard" onclick="switchPanel('leaderboard')">🏆 דירוג</button>
+      <a href="index.html" class="admin-home">🏠 ראשי</a>
+    </div>
+  </div>
+
+  <!-- CONCEPTS PANEL -->
+  <div class="panel active" id="panelConcepts">
+    <div class="panel-title">📚 ניהול מושגים ושאלות</div>
+    <div class="panel-sub">לחץ על מושג כדי לערוך את השאלות שלו או להוסיף חדשות</div>
+    <div class="concept-list" id="conceptList">טוען...</div>
+  </div>
+
+  <!-- EDITOR PANEL -->
+  <div class="panel" id="panelEditor">
+    <button class="editor-back" onclick="backToList()">→ חזרה לרשימה</button>
+    <div class="editor-concept-title" id="editorTitle"></div>
+    <div class="editor-concept-zone" id="editorZone"></div>
+    <div id="questionsContainer"></div>
+    <button class="add-question-btn" onclick="addNewQuestion()">+ הוסף שאלה חדשה</button>
+    <div class="save-bar">
+      <span class="save-status" id="saveStatus"></span>
+      <button class="save-btn" id="saveBtn" onclick="saveQuestions()">💾 שמור שינויים</button>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD PANEL -->
+  <div class="panel" id="panelLeaderboard">
+    <div class="panel-title">🏆 טבלת דירוג</div>
+    <div class="panel-sub">כל הקבוצות והשחקנים שהשתתפו במשחק</div>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>מקום</th>
+          <th>שם</th>
+          <th>מצב</th>
+          <th>ניקוד</th>
+          <th>נצפה</th>
+        </tr>
+      </thead>
+      <tbody id="lbBody">
+        <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">טוען...</td></tr>
+      </tbody>
+    </table>
+    <button class="reset-all-btn" onclick="resetAllScores()">🗑️ אפס את כל הניקודים</button>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="data.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let allConcepts = [];
+let editingConcept = null;
+let editingQuiz = [];
+
+// ═══════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════
+async function verifyAuth() {
+  const pw = document.getElementById('authPassword').value;
+  try {
+    const ok = await DB.verifyAdmin(pw);
+    if (ok) {
+      document.getElementById('authOverlay').style.display = 'none';
+      document.getElementById('adminApp').style.display = 'block';
+      loadConcepts();
+    } else {
+      const el = document.getElementById('authError');
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 3000);
+    }
+  } catch (e) {
+    console.error(e);
+    alert('שגיאת חיבור');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  document.querySelector(`.nav-btn[data-panel="${name}"]`)?.classList.add('active');
+
+  if (name === 'leaderboard') loadLeaderboard();
+}
+
+// ═══════════════════════════════════════════════
+// CONCEPTS LIST
+// ═══════════════════════════════════════════════
+async function loadConcepts() {
+  try {
+    allConcepts = await DB.initConceptsIfEmpty(CONCEPTS);
+    renderConceptList();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('conceptList').textContent = 'שגיאה בטעינה';
+  }
+}
+
+function renderConceptList() {
+  const list = document.getElementById('conceptList');
+  list.innerHTML = allConcepts.map((c, i) => {
+    const color = ZONE_COLORS[c.zone] || '#888';
+    const qCount = c.quiz ? c.quiz.length : 0;
+    return `
+      <div class="concept-row" onclick="openEditor(${i})">
+        <div class="concept-zone" style="background:${color}"></div>
+        <div class="concept-info">
+          <div class="concept-name">${c.name}</div>
+          <div class="concept-short">${c.short || ''}</div>
+        </div>
+        <div class="concept-badge ${qCount > 0 ? 'has-q' : ''}">${qCount} שאלות</div>
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// EDITOR
+// ═══════════════════════════════════════════════
+function openEditor(idx) {
+  editingConcept = allConcepts[idx];
+  editingQuiz = JSON.parse(JSON.stringify(editingConcept.quiz || []));
+
+  const color = ZONE_COLORS[editingConcept.zone] || '#888';
+  document.getElementById('editorTitle').textContent = editingConcept.name;
+  document.getElementById('editorZone').innerHTML =
+    `<span style="color:${color}">● ${ZONE_NAMES[editingConcept.zone] || ''}</span> · ${editingConcept.short || ''}`;
+
+  renderQuestions();
+
+  document.getElementById('panelConcepts').classList.remove('active');
+  document.getElementById('panelEditor').classList.add('active');
+  document.getElementById('saveStatus').textContent = '';
+}
+
+function backToList() {
+  document.getElementById('panelEditor').classList.remove('active');
+  document.getElementById('panelConcepts').classList.add('active');
+  editingConcept = null;
+}
+
+function renderQuestions() {
+  const container = document.getElementById('questionsContainer');
+  container.innerHTML = editingQuiz.map((q, qi) => `
+    <div class="question-card" id="qcard${qi}">
+      <div class="q-header">
+        <span class="q-number">שאלה ${qi + 1}</span>
+        <div class="q-actions">
+          <button class="q-action-btn delete" onclick="deleteQuestion(${qi})">🗑️ מחק</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">רמת קושי</label>
+        <select class="field-select" id="qlevel${qi}" onchange="editingQuiz[${qi}].level=this.value">
+          <option value="הבנה" ${q.level === 'הבנה' ? 'selected' : ''}>הבנה</option>
+          <option value="יישום" ${q.level === 'יישום' ? 'selected' : ''}>יישום</option>
+          <option value="ניתוח" ${q.level === 'ניתוח' ? 'selected' : ''}>ניתוח</option>
+          <option value="הערכה" ${q.level === 'הערכה' ? 'selected' : ''}>הערכה</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">שאלה</label>
+        <textarea class="field-textarea" id="qq${qi}" onchange="editingQuiz[${qi}].q=this.value">${q.q}</textarea>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">תשובות (סמן את הנכונה)</label>
+        <div class="opts-grid">
+          ${q.opts.map((o, oi) => `
+            <div class="opt-row">
+              <input type="radio" class="opt-radio" name="ans${qi}" value="${oi}"
+                ${q.ans === oi ? 'checked' : ''}
+                onchange="editingQuiz[${qi}].ans=${oi}">
+              <input class="opt-input" value="${escapeHtml(o)}"
+                onchange="editingQuiz[${qi}].opts[${oi}]=this.value">
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">הסבר (מוצג אחרי תשובה)</label>
+        <textarea class="field-textarea" id="qexp${qi}" onchange="editingQuiz[${qi}].explain=this.value">${q.explain || ''}</textarea>
+      </div>
+    </div>`).join('');
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function addNewQuestion() {
+  editingQuiz.push({
+    level: 'הבנה',
+    q: '',
+    opts: ['', '', '', ''],
+    ans: 0,
+    explain: ''
+  });
+  renderQuestions();
+  // Scroll to bottom
+  const last = document.getElementById('qcard' + (editingQuiz.length - 1));
+  if (last) last.scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteQuestion(idx) {
+  if (!confirm(`למחוק שאלה ${idx + 1}?`)) return;
+  editingQuiz.splice(idx, 1);
+  renderQuestions();
+}
+
+async function saveQuestions() {
+  if (!editingConcept) return;
+  const btn = document.getElementById('saveBtn');
+  const status = document.getElementById('saveStatus');
+  btn.disabled = true;
+  status.textContent = 'שומר...';
+
+  try {
+    // Validate
+    for (let i = 0; i < editingQuiz.length; i++) {
+      const q = editingQuiz[i];
+      if (!q.q.trim()) {
+        status.textContent = `שאלה ${i+1}: חסר טקסט שאלה`;
+        btn.disabled = false;
+        return;
+      }
+      const emptyOpts = q.opts.filter(o => !o.trim());
+      if (emptyOpts.length > 0) {
+        status.textContent = `שאלה ${i+1}: חסרות תשובות`;
+        btn.disabled = false;
+        return;
+      }
+    }
+
+    await DB.saveConceptQuiz(editingConcept.id, editingQuiz);
+    editingConcept.quiz = JSON.parse(JSON.stringify(editingQuiz));
+    status.textContent = '✓ נשמר בהצלחה!';
+    status.style.color = 'var(--green)';
+    setTimeout(() => { status.textContent = ''; status.style.color = ''; }, 3000);
+
+    // Refresh list
+    loadConcepts();
+  } catch (e) {
+    status.textContent = 'שגיאה בשמירה';
+    status.style.color = 'var(--red)';
+    console.error(e);
+  }
+  btn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════════
+async function loadLeaderboard() {
+  try {
+    const groups = await DB.getLeaderboard(50);
+    const body = document.getElementById('lbBody');
+    if (!groups.length) {
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">אין קבוצות עדיין</td></tr>';
+      return;
+    }
+    body.innerHTML = groups.map((g, i) => {
+      const rankClass = i < 3 ? `r${i+1}` : '';
+      const mode = g.mode === 'group' ? '👥 קבוצתי' : '🧑 בודד';
+      const date = g.lastSeen ? new Date(g.lastSeen).toLocaleDateString('he-IL') : '-';
+      return `
+        <tr>
+          <td><div class="lb-rank-cell ${rankClass}">${i + 1}</div></td>
+          <td class="lb-group-name">${g.name}</td>
+          <td class="lb-mode">${mode}</td>
+          <td class="lb-score-val">⭐ ${g.score || 0}</td>
+          <td class="lb-date">${date}</td>
+        </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function resetAllScores() {
+  if (!confirm('האם אתה בטוח? פעולה זו תאפס את כל הניקודים של כל הקבוצות!')) return;
+  if (!confirm('בטוח בטוח? אין דרך חזרה.')) return;
+  try {
+    const snap = await db.ref('groups').once('value');
+    const updates = {};
+    snap.forEach(child => {
+      updates[child.key + '/score'] = 0;
+      updates[child.key + '/pos'] = 0;
+      updates[child.key + '/visited'] = [0];
+    });
+    await db.ref('groups').update(updates);
+    loadLeaderboard();
+    alert('כל הניקודים אופסו.');
+  } catch (e) {
+    alert('שגיאה: ' + e.message);
+  }
+}
+
+// ZONE_COLORS and ZONE_NAMES are loaded from data.js
+</script>
+</body>
+</html>

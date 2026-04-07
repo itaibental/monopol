@@ -4,81 +4,189 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>בגרות מונופול — תקשורת וחברה תשפ"ו</title>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --gold: #f0c040;
+  --gold2: #d4a017;
+  --text: #f0ead6;
+  --card-bg: rgba(255,255,255,0.04);
+  --card-border: rgba(255,255,255,0.08);
+  --accent: #7c83ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Rubik', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text);
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: 
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(124,131,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 20%, rgba(240,192,64,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at center, #1a2040 0%, #0a0e1a 100%);
+  z-index: -1;
+}
+.landing {
+  width: 100%; max-width: 520px;
+  padding: 40px 24px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 32px;
+  animation: fadeUp 0.6s ease-out;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero { text-align: center; }
+.hero-dice {
+  font-size: 64px; display: inline-block;
+  animation: diceBounce 2s ease-in-out infinite;
+  filter: drop-shadow(0 8px 24px rgba(240,192,64,0.3));
+}
+@keyframes diceBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(8deg); }
+}
+.hero-title {
+  font-size: 36px; font-weight: 900;
+  background: linear-gradient(135deg, var(--gold), #ffe080);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-top: 12px; letter-spacing: 1px;
+}
+.hero-sub { font-size: 15px; color: #8b90b8; margin-top: 8px; line-height: 1.6; }
+.hero-badge {
+  display: inline-block; padding: 4px 14px; border-radius: 20px;
+  background: rgba(124,131,255,0.12); border: 1px solid rgba(124,131,255,0.2);
+  color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 12px;
+}
+.entry-cards { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+.entry-card {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 22px;
+  background: var(--card-bg); border: 1.5px solid var(--card-border);
+  border-radius: 16px; cursor: pointer;
+  transition: all 0.25s; text-decoration: none; color: var(--text);
+}
+.entry-card:hover {
+  border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.07);
+  transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+.entry-card:active { transform: scale(0.98); }
+.card-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; flex-shrink: 0;
+}
+.card-icon.game {
+  background: linear-gradient(135deg, rgba(240,192,64,0.2), rgba(240,192,64,0.08));
+  border: 1px solid rgba(240,192,64,0.2);
+}
+.card-icon.admin {
+  background: linear-gradient(135deg, rgba(124,131,255,0.2), rgba(124,131,255,0.08));
+  border: 1px solid rgba(124,131,255,0.2);
+}
+.card-text h3 { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+.card-text p { font-size: 12px; color: #6b7094; line-height: 1.4; }
+.card-arrow {
+  margin-right: auto; margin-left: 0;
+  font-size: 18px; color: #4a4f70; transition: transform 0.2s;
+}
+.entry-card:hover .card-arrow { transform: translateX(-4px); color: var(--text); }
+.leaderboard-preview {
+  width: 100%; background: var(--card-bg);
+  border: 1px solid var(--card-border); border-radius: 16px; padding: 18px 20px;
+}
+.lb-title {
+  font-size: 13px; font-weight: 700; color: var(--gold);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+}
+.lb-list { display: flex; flex-direction: column; gap: 6px; }
+.lb-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.02); font-size: 13px;
+}
+.lb-row:nth-child(1) { background: rgba(240,192,64,0.06); }
+.lb-rank {
+  width: 22px; height: 22px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800;
+  background: rgba(255,255,255,0.06); color: #888;
+}
+.lb-row:nth-child(1) .lb-rank { background: var(--gold); color: #1a1200; }
+.lb-row:nth-child(2) .lb-rank { background: #a0a0a0; color: #1a1200; }
+.lb-row:nth-child(3) .lb-rank { background: #cd7f32; color: #1a1200; }
+.lb-name { flex: 1; font-weight: 500; }
+.lb-score { font-weight: 700; color: var(--gold); }
+.lb-empty { font-size: 12px; color: #4a4f70; text-align: center; padding: 16px; }
+.landing-footer { font-size: 11px; color: #3a3f60; text-align: center; line-height: 1.6; }
+</style>
 </head>
 <body>
-
-<!-- SETUP SCREEN -->
-<div class="setup-overlay" id="setupOverlay">
-  <div class="setup-box">
-    <div class="setup-title">🎲 בגרות מונופול</div>
-    <div class="setup-sub">תקשורת וחברה תשפ"ו — למד תוך כדי משחק</div>
-    <div style="font-size:13px;color:#888;margin-bottom:12px">כמה שחקנים?</div>
-    <div class="num-players-btns">
-      <button class="np-btn active" data-n="1">1</button>
-      <button class="np-btn" data-n="2">2</button>
-      <button class="np-btn" data-n="3">3</button>
-      <button class="np-btn" data-n="4">4</button>
-    </div>
-    <div class="player-inputs" id="playerInputs"></div>
-    <button class="start-btn" onclick="startGame()">התחל משחק ▶</button>
+<div class="landing">
+  <div class="hero">
+    <div class="hero-dice">🎲</div>
+    <div class="hero-title">בגרות מונופול</div>
+    <div class="hero-sub">למד 33 מושגי מפתח בתקשורת וחברה<br>תוך כדי משחק לוח מהנה</div>
+    <div class="hero-badge">תשפ"ו 2026 · תקשורת וחברה</div>
   </div>
-</div>
-
-<!-- HEADER -->
-<header class="game-header">
-  <div class="header-right">
-    <div class="game-title">🎲 בגרות מונופול</div>
-    <div class="game-sub">תקשורת וחברה תשפ"ו · 33 מושגים</div>
-  </div>
-  <div class="header-controls">
-    <button class="hbtn" onclick="showSetup()">חדש</button>
-    <button class="hbtn" id="visitedCount">0/33 ✓</button>
-  </div>
-</header>
-
-<!-- PLAYER PANEL -->
-<div class="player-panel" id="playerPanel"></div>
-
-<!-- SCENE -->
-<div class="scene-wrap" id="sceneWrap">
-  <div class="board-3d" id="board3d">
-    <div class="board" id="board">
-      <!-- cells rendered by JS -->
-      <div class="board-center">
-        <div class="center-title">תקשורת<br>וחברה</div>
-        <div class="center-sub">תשפ"ו 2026</div>
-        <div class="dice-area">
-          <div class="die" id="die1">🎲</div>
-          <div class="die" id="die2">🎲</div>
-        </div>
-        <button class="roll-btn" id="rollBtn" onclick="rollDice()">הטל קוביות</button>
+  <div class="entry-cards">
+    <a class="entry-card" href="game.html">
+      <div class="card-icon game">🎮</div>
+      <div class="card-text">
+        <h3>כניסה למשחק</h3>
+        <p>שחק לבד או בקבוצה · התקדם על הלוח · ענה על שאלות</p>
       </div>
-      <div class="pawns-layer" id="pawnsLayer"></div>
+      <div class="card-arrow">‹</div>
+    </a>
+    <a class="entry-card" href="admin.html">
+      <div class="card-icon admin">⚙️</div>
+      <div class="card-text">
+        <h3>אזור ניהול למורה</h3>
+        <p>עריכת שאלות · הוספת מושגים · צפייה בהתקדמות</p>
+      </div>
+      <div class="card-arrow">‹</div>
+    </a>
+  </div>
+  <div class="leaderboard-preview">
+    <div class="lb-title">🏆 טבלת מובילים</div>
+    <div class="lb-list" id="lbList">
+      <div class="lb-empty">טוען נתונים...</div>
     </div>
   </div>
+  <div class="landing-footer">בגרות מונופול · כלי למידה אינטראקטיבי</div>
 </div>
 
-<!-- CONTROLS -->
-<div class="controls-panel">
-  <div class="turn-info">
-    <div class="turn-label">תור</div>
-    <div class="turn-value" id="turnInfo">לחץ "התחל משחק"</div>
-  </div>
-</div>
-
-<!-- MODAL -->
-<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this&&!quizActive)closeModal()">
-  <div class="modal-box" id="modalBox" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div id="modalContent"></div>
-  </div>
-</div>
-
-<!-- JavaScript -->
-<script src="data.js"></script>
-<script src="board.js"></script>
-<script src="game.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+DB.getLeaderboard(5).then(groups => {
+  const list = document.getElementById('lbList');
+  if (!groups.length) {
+    list.innerHTML = '<div class="lb-empty">עדיין אין קבוצות. הצטרפו למשחק!</div>';
+    return;
+  }
+  list.innerHTML = groups.map((g, i) => `
+    <div class="lb-row">
+      <div class="lb-rank">${i + 1}</div>
+      <div class="lb-name">${g.name}</div>
+      <div class="lb-score">⭐ ${g.score || 0}</div>
+    </div>`).join('');
+}).catch(() => {
+  document.getElementById('lbList').innerHTML = '<div class="lb-empty">לא ניתן לטעון את טבלת המובילים</div>';
+});
+</script>
 </body>
 </html>
