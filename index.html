@@ -248,7 +248,7 @@ body {
 <div class="stars" id="stars"></div>
 
 <!-- Floating admin tab -->
-<div class="admin-tab" onclick="openAdminModal()" title="כניסה לאזור ניהול">
+<div class="admin-tab" id="adminTab" title="כניסה לאזור ניהול">
   <span class="admin-tab-icon">🔐</span>
   <span class="admin-tab-label">ניהול</span>
 </div>
@@ -263,7 +263,7 @@ body {
 <div class="main-card">
 
   <!-- Continue saved session -->
-  <div class="continue-banner hidden" id="continueBanner" onclick="resumeSession()">
+  <div class="continue-banner hidden" id="continueBanner">
     <div>
       <div class="continue-text">המשך משחק קיים</div>
       <div class="continue-name" id="continueName">—</div>
@@ -274,12 +274,12 @@ body {
   <!-- Mode selection -->
   <div class="section-title">מצב משחק</div>
   <div class="mode-grid">
-    <div class="mode-btn selected" id="modeSolo" onclick="selectMode('solo')">
+    <div class="mode-btn selected" id="modeSolo">
       <span class="mode-icon">🧑</span>
       <div class="mode-label">משחק יחיד</div>
       <div class="mode-desc">תרגול עצמאי</div>
     </div>
-    <div class="mode-btn" id="modeGroup" onclick="selectMode('group')">
+    <div class="mode-btn" id="modeGroup">
       <span class="mode-icon">👥</span>
       <div class="mode-label">משחק קבוצתי</div>
       <div class="mode-desc">2–4 שחקנים</div>
@@ -296,16 +296,16 @@ body {
   <div class="np-section hidden" id="groupSection">
     <div class="section-title">כמה שחקנים?</div>
     <div class="np-grid">
-      <button class="np-btn active" data-n="2" onclick="setNumPlayers(2)">2</button>
-      <button class="np-btn" data-n="3" onclick="setNumPlayers(3)">3</button>
-      <button class="np-btn" data-n="4" onclick="setNumPlayers(4)">4</button>
+      <button class="np-btn active" data-n="2">2</button>
+      <button class="np-btn" data-n="3">3</button>
+      <button class="np-btn" data-n="4">4</button>
     </div>
     <div class="player-rows" id="playerRows"></div>
   </div>
 
   <!-- Actions -->
   <div class="actions">
-    <button class="btn-play" onclick="startGame()">🎮 התחל משחק</button>
+    <button class="btn-play" id="btnPlay">🎮 התחל משחק</button>
   </div>
 
 </div>
@@ -323,11 +323,11 @@ body {
   <div class="admin-box">
     <div class="admin-title">🔐 אזור ניהול</div>
     <div class="admin-sub">הכנס סיסמת מנהל לגישה לממשק הניהול</div>
-    <input class="admin-input" type="password" id="adminPwd" placeholder="סיסמה" onkeydown="if(event.key==='Enter')checkAdmin()" />
+    <input class="admin-input" type="password" id="adminPwd" placeholder="סיסמה" />
     <div class="error-msg hidden" id="adminErr">סיסמה שגויה</div>
     <div class="admin-btns">
-      <button class="btn-confirm" onclick="checkAdmin()">כניסה</button>
-      <button class="btn-cancel" onclick="closeAdminModal()">ביטול</button>
+      <button class="btn-confirm" id="btnConfirm">כניסה</button>
+      <button class="btn-cancel" id="btnCancel">ביטול</button>
     </div>
   </div>
 </div>
@@ -357,21 +357,21 @@ for (let i = 0; i < 80; i++) {
 }
 
 // ── Mode ──
-window.selectMode = function(mode) {
+function selectMode(mode) {
   currentMode = mode;
   document.getElementById('modeSolo').classList.toggle('selected', mode === 'solo');
   document.getElementById('modeGroup').classList.toggle('selected', mode === 'group');
   document.getElementById('soloSection').classList.toggle('hidden', mode !== 'solo');
   document.getElementById('groupSection').classList.toggle('hidden', mode !== 'group');
-};
+}
 
 // ── Group players ──
-window.setNumPlayers = function(n) {
+function setNumPlayers(n) {
   numPlayers = n;
   document.querySelectorAll('.np-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.n) === n));
   renderPlayerRows();
-};
+}
 
 function renderPlayerRows() {
   const rows = document.getElementById('playerRows');
@@ -388,7 +388,7 @@ function renderPlayerRows() {
 renderPlayerRows();
 
 // ── Start game ──
-window.startGame = function() {
+function startGame() {
   let players = [];
   if (currentMode === 'solo') {
     const name = document.getElementById('soloName').value.trim() || 'שחקן';
@@ -399,12 +399,11 @@ window.startGame = function() {
       players.push({ name, idx: i });
     }
   }
-  // Store in sessionStorage and navigate
   const sessionId = 'session_' + Date.now();
   const data = { players, mode: currentMode, sessionId, isNew: true };
   sessionStorage.setItem('gameInit', JSON.stringify(data));
   window.location.href = 'game.html';
-};
+}
 
 // ── Resume session ──
 const saved = localStorage.getItem('lastSession');
@@ -416,27 +415,27 @@ if (saved) {
   } catch(e) {}
 }
 
-window.resumeSession = function() {
+function resumeSession() {
   const saved = localStorage.getItem('lastSession');
   if (!saved) return;
   const s = JSON.parse(saved);
   sessionStorage.setItem('gameInit', JSON.stringify({ ...s, isNew: false }));
   window.location.href = 'game.html';
-};
+}
 
 // ── Admin modal ──
-window.openAdminModal = function() {
+function openAdminModal() {
   document.getElementById('adminModal').classList.remove('hidden');
   document.getElementById('adminPwd').value = '';
   document.getElementById('adminErr').classList.add('hidden');
   setTimeout(() => document.getElementById('adminPwd').focus(), 100);
-};
+}
 
-window.closeAdminModal = function() {
+function closeAdminModal() {
   document.getElementById('adminModal').classList.add('hidden');
-};
+}
 
-window.checkAdmin = function() {
+function checkAdmin() {
   const pwd = document.getElementById('adminPwd').value;
   if (pwd === ADMIN_PASSWORD) {
     window.location.href = 'admin.html';
@@ -444,7 +443,19 @@ window.checkAdmin = function() {
     document.getElementById('adminErr').classList.remove('hidden');
     document.getElementById('adminPwd').value = '';
   }
-};
+}
+
+// ── Wire up all event listeners ──
+document.getElementById('adminTab').addEventListener('click', openAdminModal);
+document.getElementById('modeSolo').addEventListener('click', () => selectMode('solo'));
+document.getElementById('modeGroup').addEventListener('click', () => selectMode('group'));
+document.getElementById('continueBanner').addEventListener('click', resumeSession);
+document.getElementById('btnPlay').addEventListener('click', startGame);
+document.getElementById('btnConfirm').addEventListener('click', checkAdmin);
+document.getElementById('btnCancel').addEventListener('click', closeAdminModal);
+document.getElementById('adminPwd').addEventListener('keydown', e => { if (e.key === 'Enter') checkAdmin(); });
+document.querySelectorAll('.np-btn').forEach(b =>
+  b.addEventListener('click', () => setNumPlayers(parseInt(b.dataset.n))));
 
 // ── Leaderboard preview ──
 async function loadLb() {
