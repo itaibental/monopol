@@ -74,26 +74,33 @@
 .lb-chip-name{font-weight:500;color:var(--text)}
 .lb-chip-score{color:#888;font-weight:600}
 
-/* ═══════════ 3D DICE ═══════════ */
+/* ═══════════ 2D DICE ═══════════ */
 .dice-area{display:flex;gap:14px;pointer-events:all;margin-top:8px;align-items:center;justify-content:center}
-.die3d-wrap{width:48px;height:48px;perspective:300px;cursor:pointer}
-.die3d{width:48px;height:48px;position:relative;transform-style:preserve-3d;transition:transform 0.6s cubic-bezier(0.2,0.8,0.3,1)}
-.die3d.rolling{animation:diceRoll3d 0.7s ease-in-out}
-@keyframes diceRoll3d{
-  0%{transform:rotateX(0) rotateY(0)}
-  20%{transform:rotateX(200deg) rotateY(150deg) scale(1.15)}
-  50%{transform:rotateX(400deg) rotateY(300deg) scale(0.95)}
-  80%{transform:rotateX(600deg) rotateY(450deg) scale(1.05)}
-  100%{transform:rotateX(720deg) rotateY(540deg)}
+.die2d{
+  width:52px;height:52px;position:relative;
+  background:linear-gradient(145deg,#fffbe6,#f5e6b8);
+  border:2.5px solid #b8941a;border-radius:10px;
+  box-shadow:2px 3px 0 #8B6914,0 6px 16px rgba(0,0,0,0.35),inset 0 2px 4px rgba(255,255,255,0.5);
+  cursor:pointer;user-select:none;
+  transition:transform 0.15s;
 }
-.die-face{position:absolute;width:48px;height:48px;background:linear-gradient(145deg,#fffbe6,#f5e6b8);border:2.5px solid #b8941a;border-radius:9px;box-shadow:inset 0 2px 6px rgba(255,255,255,0.4),inset 0 -2px 6px rgba(0,0,0,0.08)}
-.die-face.f-front{transform:translateZ(24px)}
-.die-face.f-back{transform:rotateY(180deg) translateZ(24px)}
-.die-face.f-top{transform:rotateX(90deg) translateZ(24px)}
-.die-face.f-bottom{transform:rotateX(-90deg) translateZ(24px)}
-.die-face.f-right{transform:rotateY(90deg) translateZ(24px)}
-.die-face.f-left{transform:rotateY(-90deg) translateZ(24px)}
-.pip{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8b2020,#1a0505);box-shadow:inset 0 1px 1px rgba(255,255,255,0.15),0 1px 2px rgba(0,0,0,0.4);position:absolute;transform:translate(-50%,-50%)}
+.die2d:active{transform:scale(0.92)}
+.die2d.rolling{animation:diceShake 0.6s ease}
+@keyframes diceShake{
+  0%{transform:rotate(0) scale(1)}
+  15%{transform:rotate(14deg) scale(1.1)}
+  30%{transform:rotate(-12deg) scale(1.08)}
+  45%{transform:rotate(10deg) scale(1.05)}
+  60%{transform:rotate(-8deg) scale(1.02)}
+  75%{transform:rotate(4deg) scale(1)}
+  100%{transform:rotate(0) scale(1)}
+}
+.pip{
+  width:9px;height:9px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#8b2020,#1a0505);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,0.15),0 1px 2px rgba(0,0,0,0.4);
+  position:absolute;transform:translate(-50%,-50%);
+}
 
 /* ═══════════ CELL OWNERSHIP ═══════════ */
 .cell-owner-bar{position:absolute;bottom:0;left:0;right:0;height:5px;border-radius:0 0 2px 2px}
@@ -377,8 +384,8 @@
           <div class="center-title">תקשורת<br>וחברה</div>
           <div class="center-sub">תשפ"ו 2026</div>
           <div class="dice-area">
-            <div class="die3d-wrap" id="dieWrap1"><div class="die3d" id="die1"></div></div>
-            <div class="die3d-wrap" id="dieWrap2"><div class="die3d" id="die2"></div></div>
+            <div class="die2d" id="die1"></div>
+            <div class="die2d" id="die2"></div>
           </div>
           <button class="roll-btn" id="rollBtn" onclick="rollDice()">הטל קוביות</button>
         </div>
@@ -447,49 +454,27 @@ let currentModalPos = -1;
 let loginPlayerCount = 2;
 
 // ═══════════════════════════════════════════════
-// 3D DICE RENDERING
+// 2D DICE RENDERING
 // ═══════════════════════════════════════════════
 const PIP_LAYOUTS = {
   1: [[50,50]],
-  2: [[25,25],[75,75]],
-  3: [[25,25],[50,50],[75,75]],
-  4: [[25,25],[75,25],[25,75],[75,75]],
-  5: [[25,25],[75,25],[50,50],[25,75],[75,75]],
-  6: [[25,20],[75,20],[25,50],[75,50],[25,80],[75,80]]
-};
-
-function renderDieFace(n) {
-  return PIP_LAYOUTS[n].map(([x,y]) => `<div class="pip" style="left:${x}%;top:${y}%"></div>`).join('');
-}
-
-function buildDie(el) {
-  // Faces: front=1,back=6,top=2,bottom=5,right=3,left=4
-  const faces = [
-    {cls:'f-front',n:1},{cls:'f-back',n:6},{cls:'f-top',n:2},
-    {cls:'f-bottom',n:5},{cls:'f-right',n:3},{cls:'f-left',n:4}
-  ];
-  el.innerHTML = faces.map(f => `<div class="die-face ${f.cls}" style="position:relative">${renderDieFace(f.n)}</div>`).join('');
-}
-
-const DIE_ROTATIONS = {
-  1:'rotateX(0deg) rotateY(0deg)',
-  2:'rotateX(-90deg) rotateY(0deg)',
-  3:'rotateX(0deg) rotateY(-90deg)',
-  4:'rotateX(0deg) rotateY(90deg)',
-  5:'rotateX(90deg) rotateY(0deg)',
-  6:'rotateX(180deg) rotateY(0deg)'
+  2: [[28,28],[72,72]],
+  3: [[28,28],[50,50],[72,72]],
+  4: [[28,28],[72,28],[28,72],[72,72]],
+  5: [[28,28],[72,28],[50,50],[28,72],[72,72]],
+  6: [[28,22],[72,22],[28,50],[72,50],[28,78],[72,78]]
 };
 
 function setDieValue(el, n) {
-  el.style.transform = DIE_ROTATIONS[n];
+  el.innerHTML = PIP_LAYOUTS[n].map(([x,y]) => `<div class="pip" style="left:${x}%;top:${y}%"></div>`).join('');
 }
 
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
 async function init() {
-  buildDie(document.getElementById('die1'));
-  buildDie(document.getElementById('die2'));
+  setDieValue(document.getElementById('die1'), 1);
+  setDieValue(document.getElementById('die2'), 1);
 
   try {
     ACTIVE_CONCEPTS = await DB.initConceptsIfEmpty(CONCEPTS);
@@ -793,7 +778,18 @@ async function rollDice() {
   const d2 = document.getElementById('die2');
   d1.classList.add('rolling');
   d2.classList.add('rolling');
-  await new Promise(r => setTimeout(r, 900));
+
+  // Rapid face switching during shake
+  let ticks = 0;
+  const interval = setInterval(() => {
+    setDieValue(d1, Math.floor(Math.random()*6)+1);
+    setDieValue(d2, Math.floor(Math.random()*6)+1);
+    ticks++;
+    if (ticks > 10) clearInterval(interval);
+  }, 50);
+
+  await new Promise(r => setTimeout(r, 700));
+  clearInterval(interval);
 
   const r1 = Math.floor(Math.random()*6)+1;
   const r2 = Math.floor(Math.random()*6)+1;
@@ -1169,7 +1165,7 @@ function applyZoom(val) {
   const PAN = 40;
   let isDrag=false, sx, sy, slS, stS;
   scene.addEventListener('mousedown', e => {
-    if (e.target.closest('.die3d-wrap,.roll-btn,.cell,button')) return;
+    if (e.target.closest('.die2d,.roll-btn,.cell,button')) return;
     isDrag=true; scene.style.cursor='grabbing';
     sx=e.pageX; sy=e.pageY; slS=scene.scrollLeft; stS=scene.scrollTop; e.preventDefault();
   });
