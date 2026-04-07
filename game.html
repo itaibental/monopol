@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בגרות מונופול — משחק</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/shared.css">
+<style>
+/* ═══ LEADERBOARD TOP BAR ═══ */
+.top-leaderboard {
+  background: linear-gradient(135deg, #110d00, #1a1400);
+  border-bottom: 2px solid var(--gold2);
+  padding: 0 12px;
+  display: flex; align-items: center; gap: 8px;
+  height: 42px; overflow: hidden;
+}
+.lb-label { font-size: 10px; font-weight: 800; color: var(--gold); letter-spacing: 1px; white-space: nowrap; }
+.lb-scroll { display: flex; gap: 6px; overflow-x: auto; flex: 1; }
+.lb-scroll::-webkit-scrollbar { display: none; }
+.lb-chip {
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(240,192,64,0.08); border: 1px solid rgba(240,192,64,0.18);
+  border-radius: 20px; padding: 2px 9px; flex-shrink: 0;
+  font-size: 11px; white-space: nowrap;
+}
+.lb-chip.rank1 { background: rgba(255,215,0,0.15); border-color: rgba(255,215,0,0.4); }
+.lb-chip.rank2 { background: rgba(192,192,192,0.1); border-color: rgba(192,192,192,0.3); }
+.lb-chip.rank3 { background: rgba(205,127,50,0.12); border-color: rgba(205,127,50,0.3); }
+.lb-chip-rank { color: var(--gold); font-weight: 800; }
+.lb-chip-name { color: var(--text); font-weight: 600; }
+.lb-chip-score { color: rgba(240,192,64,0.8); }
+
+/* ═══ HEADER ═══ */
+.game-header {
+  background: linear-gradient(135deg, #1a1200, #2d2000);
+  border-bottom: 2px solid var(--gold2);
+  padding: 8px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.game-title { font-size: 17px; font-weight: 800; color: var(--gold); letter-spacing: 1px; }
+.game-sub { font-size: 10px; color: #a89040; }
+.header-controls { display: flex; gap: 6px; }
+.hbtn {
+  padding: 5px 12px; border-radius: 8px; border: 1.5px solid var(--gold2);
+  background: rgba(240,192,64,0.08); color: var(--gold);
+  font-family: 'Rubik', sans-serif; font-size: 11px; cursor: pointer;
+  transition: all 0.2s;
+}
+.hbtn:hover { background: rgba(240,192,64,0.2); }
+
+/* ═══ PLAYER PANEL ═══ */
+.player-panel {
+  display: flex; gap: 8px; padding: 8px 12px;
+  background: rgba(0,0,0,0.3); border-bottom: 1px solid #2a2010;
+  overflow-x: auto;
+}
+.player-panel::-webkit-scrollbar { display: none; }
+.player-card {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 10px; padding: 7px 10px;
+  display: flex; align-items: center; gap: 7px;
+  min-width: 110px; transition: all 0.3s;
+}
+.player-card.active-player {
+  border-color: var(--gold); background: rgba(240,192,64,0.08);
+  box-shadow: 0 0 12px rgba(240,192,64,0.25);
+}
+.pawn-icon { font-size: 18px; }
+.p-name { font-size: 11px; font-weight: 600; }
+.p-pos { font-size: 10px; color: #777; }
+.p-score { font-size: 11px; color: var(--gold); font-weight: 700; }
+
+/* ═══ SCENE 3D ═══ */
+.scene-wrap {
+  perspective: 900px; perspective-origin: 50% 20%;
+  padding: 20px 10px 10px;
+  display: flex; justify-content: center;
+}
+.board-3d {
+  transform-style: preserve-3d;
+  transform: rotateX(40deg);
+  transition: transform 0.6s ease;
+  position: relative;
+}
+
+/* ═══ BOARD ═══ */
+.board {
+  width: 580px; height: 580px;
+  background: var(--felt);
+  border: 8px solid var(--board-border);
+  border-radius: 8px; position: relative;
+  box-shadow: 0 0 0 2px var(--gold2), 0 40px 80px rgba(0,0,0,0.8), inset 0 0 60px rgba(0,0,0,0.2);
+  display: grid;
+  grid-template-columns: 64px repeat(9,50px) 64px;
+  grid-template-rows: 64px repeat(9,50px) 64px;
+}
+.board::after {
+  content: ''; position: absolute; inset: -8px;
+  transform: translateZ(-20px); background: #5a3e00;
+  border-radius: 10px; z-index: -1;
+}
+
+/* ═══ CELLS ═══ */
+.cell {
+  position: relative; overflow: hidden; cursor: pointer;
+  transition: all 0.2s; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  border: 1px solid rgba(0,0,0,0.25);
+}
+.cell:hover { filter: brightness(1.3); transform: translateZ(3px); }
+.cell-color-bar { position: absolute; top: 0; left: 0; right: 0; height: 8px; }
+.cell.corner { background: #1a3520; border: 1px solid rgba(255,255,255,0.08); cursor: default; }
+.cell.corner:hover { filter: none; transform: none; }
+.cell-name { font-size: 7.5px; font-weight: 600; text-align: center; line-height: 1.2; padding: 2px 3px; color: var(--text); direction: rtl; word-break: break-word; }
+.cell-num { font-size: 7px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+.cell.vert .cell-name { font-size: 7px; }
+.cell.left-col .cell-color-bar { top: 0; left: 0; width: 8px; height: 100%; right: auto; }
+.cell.right-col .cell-color-bar { top: 0; right: 0; width: 8px; height: 100%; left: auto; }
+.cell.top-row .cell-color-bar { bottom: 0; top: auto; height: 8px; }
+.cell.visited::after { content: '✓'; position: absolute; top: 2px; right: 3px; font-size: 8px; color: rgba(34,197,94,0.7); }
+.corner-icon { font-size: 24px; }
+.corner-label { font-size: 9px; color: var(--gold); text-align: center; }
+
+/* ═══ BOARD CENTER ═══ */
+.board-center {
+  position: absolute; top: 64px; left: 64px;
+  width: calc(580px - 128px - 16px); height: calc(580px - 128px - 16px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; pointer-events: none;
+}
+.center-title { font-size: 21px; font-weight: 800; color: var(--gold); text-shadow: 0 2px 10px rgba(240,192,64,0.5); letter-spacing: 2px; text-align: center; }
+.center-sub { font-size: 10px; color: #7a6030; text-align: center; }
+.dice-area { display: flex; gap: 10px; pointer-events: all; margin-top: 6px; }
+.die {
+  width: 44px; height: 44px; background: #f8f0d0;
+  border-radius: 10px; border: 2px solid #c8a030;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; box-shadow: 3px 3px 0 #8B6914, 0 6px 20px rgba(0,0,0,0.4);
+  cursor: pointer; transition: all 0.15s; color: #1a1200; font-weight: 900;
+  user-select: none;
+}
+.die:active { transform: scale(0.9); }
+.die.rolling { animation: rollDie 0.5s ease; }
+@keyframes rollDie {
+  0%,100% { transform: rotateX(0) rotateY(0); }
+  25% { transform: rotateX(180deg) rotateY(90deg) scale(1.1); }
+  75% { transform: rotateX(90deg) rotateY(270deg) scale(0.9); }
+}
+.roll-btn {
+  padding: 8px 20px; border-radius: 20px;
+  border: 2px solid var(--gold2);
+  background: linear-gradient(135deg, #3d2800, #1a1000);
+  color: var(--gold); font-family: 'Rubik', sans-serif;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: all 0.2s; pointer-events: all;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.roll-btn:hover { background: linear-gradient(135deg, #6d4800, #3a2000); }
+.roll-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ═══ PAWNS ═══ */
+.pawns-layer { position: absolute; inset: 0; pointer-events: none; transform-style: preserve-3d; }
+.pawn {
+  position: absolute; width: 18px; height: 28px;
+  transform-style: preserve-3d;
+  transition: all 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events: none; z-index: 10;
+}
+.pawn-body { width: 14px; height: 14px; border-radius: 50%; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.4); }
+.pawn-stem { width: 4px; height: 8px; margin: 0 auto; background: rgba(255,255,255,0.3); border-radius: 2px; }
+.pawn-label { text-align: center; font-size: 8px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); margin-top: 1px; }
+
+/* ═══ CONTROLS ═══ */
+.controls-panel {
+  padding: 10px 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  border-top: 1px solid #1a1500; background: rgba(0,0,0,0.2);
+}
+.turn-info {
+  flex: 1; background: rgba(240,192,64,0.06);
+  border: 1px solid rgba(240,192,64,0.15);
+  border-radius: 10px; padding: 7px 12px; min-width: 180px;
+}
+.turn-label { font-size: 10px; color: #777; }
+.turn-value { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 1px; }
+
+/* ═══ MODAL ═══ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s; padding: 16px;
+}
+.modal-box {
+  background: linear-gradient(160deg, #1a1d2e, #0e1020);
+  border: 1px solid #2e3250; border-radius: 20px;
+  width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto;
+  padding: 22px 20px 28px; animation: slideUp 0.25s ease-out; position: relative;
+}
+.modal-close {
+  position: absolute; top: 14px; left: 14px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: rgba(255,255,255,0.08);
+  color: #888; font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-zone-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; margin-bottom: 8px; }
+.modal-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.modal-short { font-size: 13px; color: #8b90b8; margin-bottom: 14px; }
+.modal-def { font-size: 13px; color: #c0c4e0; line-height: 1.75; }
+.modal-def p { margin-bottom: 10px; }
+.modal-def ul { padding-right: 16px; }
+.modal-def li { margin-bottom: 6px; }
+.modal-def strong { color: var(--text); }
+.modal-play-btn { display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 12px; border: none; font-family: 'Rubik', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.quiz-header { margin-bottom: 14px; }
+.quiz-prog-dots { display: flex; gap: 5px; margin-bottom: 12px; }
+.qdot { flex:1; height:5px; border-radius:3px; background:#2e3250; transition: background 0.3s; }
+.qdot.correct { background: #22c55e; }
+.qdot.wrong { background: #ef4444; }
+.qdot.current { background: #7c83ff; }
+.q-level { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600; background:#252840; color:#8b90b8; margin-bottom:8px; }
+.q-text { font-size:15px; font-weight:600; line-height:1.5; margin-bottom:16px; }
+.q-opts { display:flex; flex-direction:column; gap:8px; }
+.q-opt { padding:12px 14px; border-radius:10px; border:1.5px solid #2e3250; background:#252840; color:var(--text); font-family:'Rubik',sans-serif; font-size:13px; text-align:right; cursor:pointer; transition: all 0.2s; line-height:1.4; }
+.q-opt:hover:not(:disabled) { border-color:#7c83ff; background:#1e2040; }
+.q-opt.correct { background:#14532d44; border-color:#22c55e; color:#86efac; }
+.q-opt.wrong { background:#7f1d1d44; border-color:#ef4444; color:#fca5a5; }
+.q-feedback { margin-top:12px; padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.5; display:none; }
+.q-feedback.show.correct { display:block; background:#14532d33; border:1px solid #22c55e44; color:#86efac; }
+.q-feedback.show.wrong { display:block; background:#7f1d1d33; border:1px solid #ef444444; color:#fca5a5; }
+.q-next { margin-top:14px; width:100%; padding:12px; border-radius:10px; border:none; font-family:'Rubik',sans-serif; font-size:14px; font-weight:600; cursor:pointer; display:none; background: linear-gradient(135deg, #4c52c8, #7c83ff); color:#fff; }
+.q-next.show { display:block; }
+.quiz-result { text-align:center; padding:10px 0; }
+.score-hexagon { width:90px; height:90px; margin:0 auto 14px; background: conic-gradient(#22c55e 0%, #22c55e var(--pct), #252840 var(--pct)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; color:#fff; box-shadow: 0 0 20px rgba(34,197,94,0.3); }
+.result-msg { font-size:20px; font-weight:700; margin-bottom:6px; }
+.result-sub { font-size:13px; color:#8b90b8; margin-bottom:18px; }
+.result-btns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.r-btn { padding:10px 20px; border-radius:10px; font-family:'Rubik',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.r-btn.primary { background:linear-gradient(135deg,#4c52c8,#7c83ff); border:none; color:#fff; }
+.r-btn.secondary { background:none; border:1.5px solid #2e3250; color:var(--text); }
+.float-score { position:absolute; pointer-events:none; font-size:14px; font-weight:800; color:#22c55e; animation:floatUp 1s ease forwards; z-index:100; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+@keyframes slideUp { from { transform:translateY(24px);opacity:0 } to { transform:translateY(0);opacity:1 } }
+</style>
+</head>
+<body>
+
+<!-- TOP LEADERBOARD BAR -->
+<div class="top-leaderboard">
+  <div class="lb-label">🏆 מצטיינים:</div>
+  <div class="lb-scroll" id="lbBar">
+    <div class="lb-chip" style="opacity:0.4;font-size:11px">טוען...</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="game-header">
+  <div>
+    <div class="game-title">🎲 בגרות מונופול</div>
+    <div class="game-sub">תקשורת וחברה תשפ"ו · 33 מושגים</div>
+  </div>
+  <div class="header-controls">
+    <button class="hbtn" onclick="window.location.href='index.html'">🏠 בית</button>
+    <button class="hbtn" id="visitedCount">0/33 ✓</button>
+  </div>
+</header>
+
+<!-- PLAYER PANEL -->
+<div class="player-panel" id="playerPanel"></div>
+
+<!-- SCENE -->
+<div class="scene-wrap">
+  <div class="board-3d" id="board3d">
+    <div class="board" id="board">
+      <div class="board-center">
+        <div class="center-title">תקשורת<br>וחברה</div>
+        <div class="center-sub">תשפ"ו 2026</div>
+        <div class="dice-area">
+          <div class="die" id="die1">🎲</div>
+          <div class="die" id="die2">🎲</div>
+        </div>
+        <button class="roll-btn" id="rollBtn" onclick="rollDice()">הטל קוביות</button>
+      </div>
+      <div class="pawns-layer" id="pawnsLayer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls-panel">
+  <div class="turn-info">
+    <div class="turn-label">תור</div>
+    <div class="turn-value" id="turnInfo">טוען...</div>
+  </div>
+</div>
+
+<!-- CONCEPT / QUIZ MODAL -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this&&!quizActive)closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script type="module">
+import { DEFAULT_CONCEPTS, ZONE_COLORS, ZONE_NAMES } from './js/concepts-data.js';
+import { loadCustomConcepts, getLeaderboard, saveGameState, loadGameState, updatePlayerScore } from './js/firebase-config.js';
+import { buildBoardMap, getGridPos, getCellPixelCenter, NUM_POSITIONS, CORNER_POS, PAWNS, PAWN_COLORS, DICE_FACES } from './js/game-engine.js';
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+let CONCEPTS = DEFAULT_CONCEPTS;
+let BOARD_MAP = {};
+let players = [];
+let currentPlayer = 0;
+let visited = new Set([0]);
+let rolling = false;
+let quizActive = false;
+let sessionId = '';
+let gameMode = 'solo';
+
+async function init() {
+  // Load concepts (custom overrides defaults)
+  try {
+    const custom = await loadCustomConcepts();
+    if (custom && Object.keys(custom).length > 0) {
+      CONCEPTS = Object.values(custom);
+    }
+  } catch(e) {}
+
+  BOARD_MAP = buildBoardMap(CONCEPTS);
+
+  // Parse game init from sessionStorage
+  const raw = sessionStorage.getItem('gameInit');
+  if (!raw) { window.location.href = 'index.html'; return; }
+  const init = JSON.parse(raw);
+
+  sessionId = init.sessionId;
+  gameMode = init.mode || 'solo';
+
+  if (!init.isNew) {
+    // Try resume from Firebase
+    try {
+      const saved = await loadGameState(sessionId);
+      if (saved) {
+        players = saved.players;
+        currentPlayer = saved.currentPlayer;
+        visited = new Set(saved.visited || [0]);
+        renderBoard(); renderPlayers(); renderPawns();
+        updateTurnInfo(); updateVisitedCount(); updateBoardVisited();
+        loadLeaderboard();
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // New game
+  players = init.players.map((p, i) => ({
+    name: p.name, pawn: PAWNS[i], color: PAWN_COLORS[i], pos: 0, score: 0
+  }));
+  currentPlayer = 0; visited = new Set([0]);
+
+  // Save session reference to localStorage for resume
+  localStorage.setItem('lastSession', JSON.stringify({
+    sessionId, mode: gameMode,
+    playerNames: players.map(p => p.name)
+  }));
+
+  renderBoard(); renderPlayers(); renderPawns();
+  updateTurnInfo(); updateVisitedCount();
+  loadLeaderboard();
+}
+
+// ═══════════════════════════════════════════════
+// LEADERBOARD BAR
+// ═══════════════════════════════════════════════
+async function loadLeaderboard() {
+  try {
+    const lb = await getLeaderboard();
+    const bar = document.getElementById('lbBar');
+    if (!lb.length) { bar.innerHTML = '<div class="lb-chip" style="opacity:0.4">אין נתונים</div>'; return; }
+    const medals = ['🥇','🥈','🥉'];
+    bar.innerHTML = lb.slice(0,10).map((p, i) => `
+      <div class="lb-chip ${i<3?'rank'+(i+1):''}">
+        <span class="lb-chip-rank">${medals[i]||('#'+(i+1))}</span>
+        <span class="lb-chip-name">${p.name}</span>
+        <span class="lb-chip-score">⭐${p.score}</span>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════
+// BOARD RENDER
+// ═══════════════════════════════════════════════
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.querySelectorAll('.cell').forEach(e => e.remove());
+  for (let pos = 0; pos < NUM_POSITIONS; pos++) {
+    const cell = document.createElement('div');
+    const gp = getGridPos(pos);
+    cell.style.gridRow = gp.row;
+    cell.style.gridColumn = gp.col;
+    cell.dataset.pos = pos;
+    const data = BOARD_MAP[pos];
+    if (data.type === 'corner') {
+      cell.className = 'cell corner';
+      cell.innerHTML = `<div class="corner-icon">${data.icon}</div><div class="corner-label">${data.label}</div>`;
+    } else {
+      const c = data.concept;
+      const color = ZONE_COLORS[c.zone];
+      let edgeClass = '';
+      if (pos >= 11 && pos <= 19) edgeClass = 'left-col';
+      else if (pos >= 20 && pos <= 30) edgeClass = 'top-row';
+      else if (pos >= 31 && pos <= 39) edgeClass = 'right-col';
+      cell.className = `cell ${edgeClass} ${visited.has(pos) ? 'visited' : ''}`;
+      cell.style.background = color + '18';
+      cell.innerHTML = `<div class="cell-color-bar" style="background:${color}"></div>
+        <div class="cell-name">${c.name}</div>
+        <div class="cell-num">${pos}</div>`;
+      cell.addEventListener('click', () => openConceptModal(pos));
+    }
+    board.appendChild(cell);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// PLAYERS RENDER
+// ═══════════════════════════════════════════════
+function renderPlayers() {
+  const panel = document.getElementById('playerPanel');
+  panel.innerHTML = players.map((p, i) => `
+    <div class="player-card ${i === currentPlayer ? 'active-player' : ''}">
+      <div class="pawn-icon">${p.pawn}</div>
+      <div>
+        <div class="p-name">${p.name}</div>
+        <div class="p-pos">משבצת ${p.pos}</div>
+        <div class="p-score">⭐ ${p.score}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// PAWNS RENDER
+// ═══════════════════════════════════════════════
+function renderPawns() {
+  const layer = document.getElementById('pawnsLayer');
+  layer.innerHTML = '';
+  players.forEach((p, i) => {
+    const { x, y } = getCellPixelCenter(p.pos);
+    const offset = (i - (players.length - 1) / 2) * 10;
+    const pawn = document.createElement('div');
+    pawn.className = 'pawn'; pawn.id = 'pawn' + i;
+    pawn.style.left = (x + offset - 7) + 'px';
+    pawn.style.top = (y - 24 + (i * 3)) + 'px';
+    pawn.innerHTML = `<div class="pawn-body" style="background:${p.color}"></div>
+      <div class="pawn-stem"></div>
+      <div class="pawn-label">${p.pawn}</div>`;
+    layer.appendChild(pawn);
+  });
+}
+
+function animatePawn(playerIdx, newPos) {
+  return new Promise(resolve => {
+    const { x, y } = getCellPixelCenter(newPos);
+    const offset = (playerIdx - (players.length - 1) / 2) * 10;
+    const pawn = document.getElementById('pawn' + playerIdx);
+    if (pawn) {
+      pawn.style.left = (x + offset - 7) + 'px';
+      pawn.style.top = (y - 24 + (playerIdx * 3)) + 'px';
+    }
+    setTimeout(resolve, 650);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// DICE
+// ═══════════════════════════════════════════════
+window.rollDice = async function() {
+  if (rolling || quizActive) return;
+  rolling = true;
+  document.getElementById('rollBtn').disabled = true;
+  const d1 = document.getElementById('die1');
+  const d2 = document.getElementById('die2');
+  d1.classList.add('rolling'); d2.classList.add('rolling');
+  let ticks = 0;
+  const interval = setInterval(() => {
+    d1.textContent = DICE_FACES[Math.floor(Math.random()*6)];
+    d2.textContent = DICE_FACES[Math.floor(Math.random()*6)];
+    if (++ticks > 12) clearInterval(interval);
+  }, 60);
+  await new Promise(r => setTimeout(r, 800));
+  const r1 = Math.floor(Math.random()*6)+1, r2 = Math.floor(Math.random()*6)+1;
+  d1.classList.remove('rolling'); d2.classList.remove('rolling');
+  d1.textContent = DICE_FACES[r1-1]; d2.textContent = DICE_FACES[r2-1];
+  const total = r1 + r2;
+  const p = players[currentPlayer];
+  const oldPos = p.pos;
+  p.pos = (p.pos + total) % NUM_POSITIONS;
+  for (let step = 1; step <= total; step++) {
+    await animatePawn(currentPlayer, (oldPos + step) % NUM_POSITIONS);
+  }
+  renderPlayers();
+  visited.add(p.pos); updateVisitedCount(); updateBoardVisited();
+  const cell = BOARD_MAP[p.pos];
+  if (cell.type === 'corner') {
+    handleCorner(p.pos);
+    rolling = false;
+    nextPlayer();
+  } else {
+    rolling = false;
+    openConceptModal(p.pos, true);
+  }
+  document.getElementById('rollBtn').disabled = false;
+  await persistState();
+};
+
+function handleCorner(pos) {
+  const msgs = { 0:'חזרת לנקודת ההתחלה! 🚀', 10:`🌟 בונוס! ${players[currentPlayer].name} מקבל +5 נקודות!`, 20:'☕ הפסקה — עבור תור', 30:'🎯 מזל! +3 נקודות!' };
+  if (pos === 10) players[currentPlayer].score += 5;
+  if (pos === 30) players[currentPlayer].score += 3;
+  showToast(msgs[pos] || '');
+  renderPlayers();
+}
+
+function nextPlayer() {
+  currentPlayer = (currentPlayer + 1) % players.length;
+  renderPlayers(); updateTurnInfo();
+}
+
+function updateTurnInfo() {
+  if (!players.length) return;
+  const p = players[currentPlayer];
+  document.getElementById('turnInfo').textContent = `${p.pawn} תור ${p.name} — משבצת ${p.pos}`;
+}
+
+function updateVisitedCount() {
+  const conceptVisited = [...visited].filter(pos => BOARD_MAP[pos]?.type === 'concept').length;
+  document.getElementById('visitedCount').textContent = conceptVisited + '/33 ✓';
+}
+
+function updateBoardVisited() {
+  document.querySelectorAll('.cell[data-pos]').forEach(cell => {
+    const pos = parseInt(cell.dataset.pos);
+    if (visited.has(pos) && BOARD_MAP[pos]?.type === 'concept') cell.classList.add('visited');
+  });
+}
+
+// ═══════════════════════════════════════════════
+// CONCEPT MODAL
+// ═══════════════════════════════════════════════
+let currentConcept = null;
+
+function openConceptModal(pos, autoQuiz = false) {
+  const cell = BOARD_MAP[pos];
+  if (!cell || cell.type !== 'concept') return;
+  const c = cell.concept;
+  currentConcept = c;
+  const color = ZONE_COLORS[c.zone];
+  document.getElementById('modalContent').innerHTML = `
+    <div><span class="modal-zone-badge" style="background:${color}22;color:${color}">${ZONE_NAMES[c.zone]}</span></div>
+    <div class="modal-title">${c.name}</div>
+    <div class="modal-short">${c.short}</div>
+    <div class="modal-def">${c.def}</div>
+    <button class="modal-play-btn" style="background:linear-gradient(135deg,${color}cc,${color});color:#000" onclick="startQuiz()">
+      🎮 התחל 5 שאלות
+    </button>`;
+  document.getElementById('modal').style.display = 'flex';
+}
+
+window.closeModal = function() {
+  if (quizActive) return;
+  document.getElementById('modal').style.display = 'none';
+  currentConcept = null;
+  if (!rolling) nextPlayer();
+};
+
+// ═══════════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════════
+let qState = null;
+
+window.startQuiz = function() {
+  if (!currentConcept) return;
+  quizActive = true;
+  qState = { concept: currentConcept, qi: 0, score: 0, dots: new Array(5).fill('') };
+  renderQuestion();
+};
+
+function renderQuestion() {
+  const { concept, qi, dots } = qState;
+  const color = ZONE_COLORS[concept.zone];
+  const q = concept.quiz[qi];
+  const dotsHtml = dots.map((d, i) =>
+    `<div class="qdot ${i < qi ? d : i === qi ? 'current' : ''}"></div>`).join('');
+  document.getElementById('modalContent').innerHTML = `
+    <div class="quiz-header">
+      <div style="font-size:12px;font-weight:700;color:${color};margin-bottom:8px">${concept.name}</div>
+      <div class="quiz-prog-dots">${dotsHtml}</div>
+      <div style="font-size:11px;color:#666;margin-bottom:8px">שאלה ${qi+1} / 5</div>
+      <div class="q-level">${q.level}</div>
+      <div class="q-text">${q.q}</div>
+    </div>
+    <div class="q-opts">
+      ${q.opts.map((o,i) => `<button class="q-opt" onclick="answerQ(${i})">${o}</button>`).join('')}
+    </div>
+    <div class="q-feedback" id="qfb"></div>
+    <button class="q-next" id="qnext" onclick="nextQ()">${qi < 4 ? 'שאלה הבאה ›' : 'תוצאות ›'}</button>`;
+}
+
+window.answerQ = function(chosen) {
+  const { concept, qi } = qState;
+  const q = concept.quiz[qi];
+  const opts = document.querySelectorAll('.q-opt');
+  opts.forEach(b => b.disabled = true);
+  const correct = chosen === q.ans;
+  if (correct) qState.score++;
+  qState.dots[qi] = correct ? 'correct' : 'wrong';
+  opts[q.ans].classList.add('correct');
+  if (!correct) opts[chosen].classList.add('wrong');
+  const fb = document.getElementById('qfb');
+  fb.className = 'q-feedback show ' + (correct ? 'correct' : 'wrong');
+  fb.textContent = (correct ? '✓ נכון! ' : '✗ לא נכון. ') + q.explain;
+  document.getElementById('qnext').classList.add('show');
+};
+
+window.nextQ = function() {
+  qState.qi++;
+  if (qState.qi >= 5) showResult();
+  else renderQuestion();
+};
+
+function showResult() {
+  const { concept, score, dots } = qState;
+  const color = ZONE_COLORS[concept.zone];
+  const pct = Math.round(score / 5 * 100);
+  const p = players[currentPlayer];
+  const points = score * 2;
+  if (p) p.score += points;
+  const msg = score === 5 ? 'מושלם! 🏆' : score >= 3 ? 'כל הכבוד! 💪' : 'נסה שוב 📚';
+  const dotsHtml = dots.map(d => `<div class="qdot ${d}"></div>`).join('');
+  document.getElementById('modalContent').innerHTML = `
+    <div class="quiz-result">
+      <div class="quiz-prog-dots" style="margin-bottom:16px">${dotsHtml}</div>
+      <div class="score-hexagon" style="--pct:${pct}%">${score}/5</div>
+      <div class="result-msg">${msg}</div>
+      <div class="result-sub">הרווחת <strong style="color:${color}">+${points} נקודות</strong></div>
+      <div class="result-btns">
+        <button class="r-btn primary" onclick="retryQuiz()">נסה שוב</button>
+        <button class="r-btn secondary" onclick="finishQuiz()">סיים</button>
+      </div>
+    </div>`;
+  renderPlayers();
+  quizActive = false;
+  persistState();
+}
+
+window.retryQuiz = function() {
+  quizActive = true;
+  qState.qi = 0; qState.score = 0; qState.dots = new Array(5).fill('');
+  renderQuestion();
+};
+
+window.finishQuiz = function() {
+  quizActive = false;
+  document.getElementById('modal').style.display = 'none';
+  nextPlayer(); renderPlayers(); updateTurnInfo();
+};
+
+// ═══════════════════════════════════════════════
+// PERSIST TO FIREBASE
+// ═══════════════════════════════════════════════
+async function persistState() {
+  if (!sessionId) return;
+  try {
+    await saveGameState(sessionId, { players, currentPlayer, visited: [...visited], sessionId, mode: gameMode });
+    for (const p of players) {
+      await updatePlayerScore(sessionId, p.name, p.score, p.pos);
+    }
+    loadLeaderboard();
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// ═══════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
