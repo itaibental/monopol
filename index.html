@@ -332,9 +332,7 @@ body {
   </div>
 </div>
 
-<script type="module">
-import { getLeaderboard, loadGameState, db, ref, onValue } from './js/firebase-config.js';
-
+<script>
 const ADMIN_PASSWORD = 'ibt1234';
 const PAWNS = ['🔴','🔵','🟢','🟡'];
 
@@ -395,8 +393,8 @@ function startGame() {
     players = [{ name, idx: 0 }];
   } else {
     for (let i = 0; i < numPlayers; i++) {
-      const name = document.getElementById('pname' + i)?.value.trim() || `שחקן ${i+1}`;
-      players.push({ name, idx: i });
+      const name = document.getElementById('pname' + i) ? document.getElementById('pname' + i).value.trim() : ('שחקן ' + (i+1));
+      players.push({ name: name || ('שחקן ' + (i+1)), idx: i });
     }
   }
   const sessionId = 'session_' + Date.now();
@@ -406,21 +404,23 @@ function startGame() {
 }
 
 // ── Resume session ──
-const saved = localStorage.getItem('lastSession');
-if (saved) {
-  try {
+try {
+  const saved = localStorage.getItem('lastSession');
+  if (saved) {
     const s = JSON.parse(saved);
-    document.getElementById('continueName').textContent = s.playerNames?.join(', ') || s.sessionId;
+    document.getElementById('continueName').textContent = (s.playerNames && s.playerNames.join(', ')) || s.sessionId;
     document.getElementById('continueBanner').classList.remove('hidden');
-  } catch(e) {}
-}
+  }
+} catch(e) {}
 
 function resumeSession() {
-  const saved = localStorage.getItem('lastSession');
-  if (!saved) return;
-  const s = JSON.parse(saved);
-  sessionStorage.setItem('gameInit', JSON.stringify({ ...s, isNew: false }));
-  window.location.href = 'game.html';
+  try {
+    const saved = localStorage.getItem('lastSession');
+    if (!saved) return;
+    const s = JSON.parse(saved);
+    sessionStorage.setItem('gameInit', JSON.stringify(Object.assign({}, s, { isNew: false })));
+    window.location.href = 'game.html';
+  } catch(e) {}
 }
 
 // ── Admin modal ──
@@ -428,7 +428,7 @@ function openAdminModal() {
   document.getElementById('adminModal').classList.remove('hidden');
   document.getElementById('adminPwd').value = '';
   document.getElementById('adminErr').classList.add('hidden');
-  setTimeout(() => document.getElementById('adminPwd').focus(), 100);
+  setTimeout(function() { document.getElementById('adminPwd').focus(); }, 100);
 }
 
 function closeAdminModal() {
@@ -447,34 +447,35 @@ function checkAdmin() {
 
 // ── Wire up all event listeners ──
 document.getElementById('adminTab').addEventListener('click', openAdminModal);
-document.getElementById('modeSolo').addEventListener('click', () => selectMode('solo'));
-document.getElementById('modeGroup').addEventListener('click', () => selectMode('group'));
+document.getElementById('modeSolo').addEventListener('click', function() { selectMode('solo'); });
+document.getElementById('modeGroup').addEventListener('click', function() { selectMode('group'); });
 document.getElementById('continueBanner').addEventListener('click', resumeSession);
 document.getElementById('btnPlay').addEventListener('click', startGame);
 document.getElementById('btnConfirm').addEventListener('click', checkAdmin);
 document.getElementById('btnCancel').addEventListener('click', closeAdminModal);
-document.getElementById('adminPwd').addEventListener('keydown', e => { if (e.key === 'Enter') checkAdmin(); });
-document.querySelectorAll('.np-btn').forEach(b =>
-  b.addEventListener('click', () => setNumPlayers(parseInt(b.dataset.n))));
+document.getElementById('adminPwd').addEventListener('keydown', function(e) { if (e.key === 'Enter') checkAdmin(); });
+document.querySelectorAll('.np-btn').forEach(function(b) {
+  b.addEventListener('click', function() { setNumPlayers(parseInt(b.dataset.n)); });
+});
 
-// ── Leaderboard preview ──
-async function loadLb() {
+// ── Leaderboard preview — loaded async so it never blocks the UI ──
+(async function loadLb() {
   try {
+    const { getLeaderboard } = await import('./js/firebase-config.js');
     const lb = await getLeaderboard();
     const el = document.getElementById('lbPeek');
-    if (!lb.length) { el.innerHTML = '<div class="lb-pill" style="opacity:0.4">אין נתונים עדיין</div>'; return; }
+    if (!lb || !lb.length) { el.innerHTML = '<div class="lb-pill" style="opacity:0.4">אין נתונים עדיין</div>'; return; }
     const medals = ['🥇','🥈','🥉'];
-    el.innerHTML = lb.slice(0,5).map((p, i) => `
+    el.innerHTML = lb.slice(0,5).map(function(p, i) { return `
       <div class="lb-pill">
         <span class="lb-pill-rank">${medals[i] || (i+1)}</span>
         <span class="lb-pill-name">${p.name}</span>
         <span class="lb-pill-score">⭐${p.score}</span>
-      </div>`).join('');
+      </div>`; }).join('');
   } catch(e) {
-    document.getElementById('lbPeek').innerHTML = '<div class="lb-pill" style="opacity:0.3">טעינה...</div>';
+    document.getElementById('lbPeek').innerHTML = '<div class="lb-pill" style="opacity:0.3">—</div>';
   }
-}
-loadLb();
+})();
 </script>
 </body>
 </html>
