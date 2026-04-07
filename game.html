@@ -306,20 +306,13 @@
   </div>
 </div>
 
-<script type="module">
+<script src="js/concepts-data-global.js"></script>
+<script src="js/game-engine-global.js"></script>
+<script>
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-let CONCEPTS = [];
-let ZONE_COLORS = {};
-let ZONE_NAMES = {};
-let buildBoardMap, getGridPos, getCellPixelCenter;
-let NUM_POSITIONS = 40, CORNER_POS = [0,10,20,30];
-let PAWNS = ['🔴','🔵','🟢','🟡'];
-let PAWN_COLORS = ['#ef4444','#3b82f6','#22c55e','#eab308'];
-let DICE_FACES = ['⚀','⚁','⚂','⚃','⚄','⚅'];
-let loadCustomConcepts, getLeaderboard, saveGameState, loadGameState, updatePlayerScore;
-
+let CONCEPTS = DEFAULT_CONCEPTS;
 let BOARD_MAP = {};
 let players = [];
 let currentPlayer = 0;
@@ -329,35 +322,10 @@ let quizActive = false;
 let sessionId = '';
 let gameMode = 'solo';
 
+// Firebase functions — loaded async, optional
+let loadCustomConcepts, getLeaderboard, saveGameState, loadGameState, updatePlayerScore;
+
 async function init() {
-  // Load core data modules — must succeed
-  try {
-    const concepts = await import('./js/concepts-data.js');
-    CONCEPTS = concepts.DEFAULT_CONCEPTS;
-    ZONE_COLORS = concepts.ZONE_COLORS;
-    ZONE_NAMES = concepts.ZONE_NAMES;
-  } catch(e) {
-    document.getElementById('turnInfo').textContent = 'שגיאה: לא ניתן לטעון נתונים. בדוק שהקבצים קיימים.';
-    console.error('concepts-data load failed:', e);
-    return;
-  }
-
-  try {
-    const engine = await import('./js/game-engine.js');
-    buildBoardMap = engine.buildBoardMap;
-    getGridPos = engine.getGridPos;
-    getCellPixelCenter = engine.getCellPixelCenter;
-    NUM_POSITIONS = engine.NUM_POSITIONS;
-    CORNER_POS = engine.CORNER_POS;
-    PAWNS = engine.PAWNS;
-    PAWN_COLORS = engine.PAWN_COLORS;
-    DICE_FACES = engine.DICE_FACES;
-  } catch(e) {
-    document.getElementById('turnInfo').textContent = 'שגיאה: לא ניתן לטעון מנוע משחק.';
-    console.error('game-engine load failed:', e);
-    return;
-  }
-
   // Firebase — optional, failures won't block game
   try {
     const fb = await import('./js/firebase-config.js');
@@ -370,7 +338,7 @@ async function init() {
     console.warn('Firebase not available, running offline:', e);
   }
 
-  // Optionally load custom concepts from Firebase
+  // Optionally override concepts from Firebase
   if (loadCustomConcepts) {
     try {
       const custom = await loadCustomConcepts();

@@ -283,12 +283,25 @@ body { font-family: 'Rubik', sans-serif; background: #0a0e1a; color: var(--text)
   </div>
 </div>
 
-<script type="module">
-import { DEFAULT_CONCEPTS, ZONE_COLORS, ZONE_NAMES } from './js/concepts-data.js';
-import { loadCustomConcepts, saveCustomConcepts, getLeaderboard, db, ref, set, remove } from './js/firebase-config.js';
-
+<script src="js/concepts-data-global.js"></script>
+<script>
 let concepts = [];
 let selectedId = null;
+
+// Firebase functions
+let loadCustomConcepts, saveCustomConcepts, getLeaderboard, clearLbFn;
+
+async function loadFirebase() {
+  try {
+    const fb = await import('./js/firebase-config.js');
+    loadCustomConcepts = fb.loadCustomConcepts;
+    saveCustomConcepts = fb.saveCustomConcepts;
+    getLeaderboard = fb.getLeaderboard;
+    clearLbFn = async () => { await fb.set(fb.ref(fb.db, 'leaderboard'), null); };
+  } catch(e) {
+    console.warn('Firebase not available:', e);
+  }
+}
 
 // ── Tab switching ──
 function switchTab(tab) {
@@ -301,10 +314,15 @@ function switchTab(tab) {
 
 // ── Load concepts ──
 async function loadConcepts() {
+  await loadFirebase();
   try {
-    const custom = await loadCustomConcepts();
-    if (custom && Object.keys(custom).length > 0) {
-      concepts = Object.values(custom).sort((a,b) => a.id - b.id);
+    if (loadCustomConcepts) {
+      const custom = await loadCustomConcepts();
+      if (custom && Object.keys(custom).length > 0) {
+        concepts = Object.values(custom).sort((a,b) => a.id - b.id);
+      } else {
+        concepts = JSON.parse(JSON.stringify(DEFAULT_CONCEPTS));
+      }
     } else {
       concepts = JSON.parse(JSON.stringify(DEFAULT_CONCEPTS));
     }
@@ -472,7 +490,7 @@ async function saveConcept() {
   try {
     const map = {};
     concepts.forEach(x => map[x.id] = x);
-    await saveCustomConcepts(map);
+    if (saveCustomConcepts) await saveCustomConcepts(map);
     renderSidebar();
     showToast('✓ המושג נשמר בהצלחה');
   } catch(e) {
@@ -488,7 +506,7 @@ async function deleteConcept(id) {
   try {
     const map = {};
     concepts.forEach(x => map[x.id] = x);
-    await saveCustomConcepts(map);
+    if (saveCustomConcepts) await saveCustomConcepts(map);
     document.getElementById('editorPanel').innerHTML = `<div class="editor-empty"><div class="editor-empty-icon">📝</div><div class="editor-empty-text">בחר מושג מהרשימה לעריכה</div></div>`;
     renderSidebar();
     showToast('✓ המושג נמחק');
@@ -513,6 +531,10 @@ function addNewConcept() {
 
 // ── Leaderboard ──
 async function loadLbTable() {
+  if (!getLeaderboard) { 
+    document.getElementById('lbTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#555;padding:30px">Firebase לא מחובר</td></tr>';
+    return;
+  }
   try {
     const lb = await getLeaderboard();
     const tbody = document.getElementById('lbTableBody');
@@ -534,7 +556,7 @@ async function loadLbTable() {
 async function clearLeaderboard() {
   if (!confirm('למחוק את כל לוח השיאים? הפעולה בלתי הפיכה.')) return;
   try {
-    await set(ref(db, 'leaderboard'), null);
+    if (clearLbFn) await clearLbFn();
     showToast('✓ לוח השיאים נוקה');
     loadLbTable();
   } catch(e) {
