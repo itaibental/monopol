@@ -1,9 +1,35 @@
 // ═══════════════════════════════════════════════
-// BOARD LAYOUT — 44 positions
-// 4 corners (0, 11, 22, 33) + 4 bonus (5, 16, 27, 38)
-// + 36 concept cells
-// Each side: 11 cells (corner + 4 concepts + bonus + 4 concepts + corner)
-// Grid: 12×12 (corners = 128px, normal = 100px)
+// BOARD LAYOUT — 44 positions, CLOCKWISE
+//
+// Visual layout (12×12 grid):
+//
+//   [22]─[21]─[20]─[19]─[18]─[17]─[16]─[15]─[14]─[13]─[12]─[11]
+//    |                                                          |
+//   [23]                                                       [10]
+//   [24]                                                        [9]
+//   [25]                                                        [8]
+//   [26]                                                        [7]
+//   [27]               CENTER                                   [6]
+//   [28]                                                        [5]
+//   [29]                                                        [4]
+//   [30]                                                        [3]
+//   [31]                                                        [2]
+//   [32]                                                        [1]
+//    |                                                          |
+//   [33]─[34]─[35]─[36]─[37]─[38]─[39]─[40]─[41]─[42]─[43]─[ 0]
+//
+// pos  0 = START (bottom-right corner)
+// pos  1-10 = right column going UP
+// pos 11 = top-right corner (בונוס)
+// pos 12-21 = top row going LEFT
+// pos 22 = top-left corner (הפסקה)
+// pos 23-32 = left column going DOWN
+// pos 33 = bottom-left corner (מזל)
+// pos 34-43 = bottom row going RIGHT (back to START)
+//
+// Corners: 0, 11, 22, 33
+// Bonus cards: 5 (right col mid), 16 (top row mid),
+//              27 (left col mid), 38 (bottom row mid)
 // ═══════════════════════════════════════════════
 
 const NUM_POSITIONS = 44;
@@ -39,32 +65,53 @@ for (let i = 0; i < NUM_POSITIONS; i++) {
 }
 
 // ═══════════════════════════════════════════════
-// GRID POSITIONS
-// 12×12 grid. Each side has 12 cells (including shared corners).
-// Bottom row: pos 0-11 → grid row 12, col 12 down to 1 (RTL: right to left)
-// Left col:   pos 12-21 → grid col 1, row 11 up to 2
-// Top row:    pos 22-33 → grid row 1, col 2 to 12 (left to right) — WAIT, keeping original RTL
-// Right col:  pos 34-43 → grid col 12, row 2 down to 11
+// GRID POSITIONS (12×12 grid, rows/cols 1-12)
+//
+// Clockwise from bottom-right:
+// pos  0       → row 12, col 12  (bottom-right = START)
+// pos  1-10    → right col going UP: row 11 down to row 2, col 12
+// pos 11       → row 1,  col 12  (top-right)
+// pos 12-21    → top row going LEFT: col 11 down to col 2, row 1
+// pos 22       → row 1,  col 1   (top-left)
+// pos 23-32    → left col going DOWN: row 2 to row 11, col 1
+// pos 33       → row 12, col 1   (bottom-left)
+// pos 34-43    → bottom row going RIGHT: col 2 to col 11, row 12
 // ═══════════════════════════════════════════════
 
 function getGridPos(pos) {
-  if (pos >= 0 && pos <= 11) {
-    // Bottom row: pos 0=bottom-right (col 12), pos 11=bottom-left (col 1)
-    return { row: 12, col: 12 - pos };
+  // START corner (bottom-right)
+  if (pos === 0) return { row: 12, col: 12 };
+
+  // Right column going UP (pos 1-10 → row 11..2, col 12)
+  if (pos >= 1 && pos <= 10) {
+    return { row: 12 - pos, col: 12 };
   }
+
+  // Top-right corner
+  if (pos === 11) return { row: 1, col: 12 };
+
+  // Top row going LEFT (pos 12-21 → col 11..2, row 1)
   if (pos >= 12 && pos <= 21) {
-    // Left column going up: pos 12=row 11, pos 21=row 2
-    return { row: 11 - (pos - 12), col: 1 };
+    return { row: 1, col: 12 - (pos - 11) };
   }
-  if (pos >= 22 && pos <= 33) {
-    // Top row left to right: pos 22=col 1, pos 33=col 12
-    return { row: 1, col: pos - 21 };
+
+  // Top-left corner
+  if (pos === 22) return { row: 1, col: 1 };
+
+  // Left column going DOWN (pos 23-32 → row 2..11, col 1)
+  if (pos >= 23 && pos <= 32) {
+    return { row: pos - 21, col: 1 };
   }
+
+  // Bottom-left corner
+  if (pos === 33) return { row: 12, col: 1 };
+
+  // Bottom row going RIGHT (pos 34-43 → col 2..11, row 12)
   if (pos >= 34 && pos <= 43) {
-    // Right column going down: pos 34=row 2, pos 43=row 11
-    return { row: pos - 32, col: 12 };
+    return { row: 12, col: pos - 32 };
   }
-  return { row: 1, col: 1 };
+
+  return { row: 12, col: 12 };
 }
 
 // ═══════════════════════════════════════════════
