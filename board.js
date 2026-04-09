@@ -16,20 +16,22 @@
 //   [31]                                                        [2]
 //   [32]                                                        [1]
 //    |                                                          |
-//   [33]─[34]─[35]─[36]─[37]─[38]─[39]─[40]─[41]─[42]─[43]─[ 0]
+//   [ 0]─[43]─[42]─[41]─[40]─[39]─[38]─[37]─[36]─[35]─[34]─[33]
 //
-// pos  0 = START (bottom-right corner)
-// pos  1-10 = right column going UP
-// pos 11 = top-right corner (בונוס)
-// pos 12-21 = top row going LEFT
-// pos 22 = top-left corner (הפסקה)
-// pos 23-32 = left column going DOWN
-// pos 33 = bottom-left corner (מזל)
-// pos 34-43 = bottom row going RIGHT (back to START)
+// START
+//
+// pos  0 = START        (bottom-left corner)  🚀
+// pos  1-10 = left column going UP
+// pos 11 = top-left corner (בונוס)            ⭐
+// pos 12-21 = top row going RIGHT
+// pos 22 = top-right corner (הפסקה)           ☕
+// pos 23-32 = right column going DOWN
+// pos 33 = bottom-right corner (מזל)          🎯
+// pos 34-43 = bottom row going LEFT (back to START)
 //
 // Corners: 0, 11, 22, 33
-// Bonus cards: 5 (right col mid), 16 (top row mid),
-//              27 (left col mid), 38 (bottom row mid)
+// Bonus cards: 5 (left col mid), 16 (top row mid),
+//              27 (right col mid), 38 (bottom row mid)
 // ═══════════════════════════════════════════════
 
 const NUM_POSITIONS = 44;
@@ -67,51 +69,51 @@ for (let i = 0; i < NUM_POSITIONS; i++) {
 // ═══════════════════════════════════════════════
 // GRID POSITIONS (12×12 grid, rows/cols 1-12)
 //
-// Clockwise from bottom-right:
-// pos  0       → row 12, col 12  (bottom-right = START)
-// pos  1-10    → right col going UP: row 11 down to row 2, col 12
-// pos 11       → row 1,  col 12  (top-right)
-// pos 12-21    → top row going LEFT: col 11 down to col 2, row 1
-// pos 22       → row 1,  col 1   (top-left)
-// pos 23-32    → left col going DOWN: row 2 to row 11, col 1
-// pos 33       → row 12, col 1   (bottom-left)
-// pos 34-43    → bottom row going RIGHT: col 2 to col 11, row 12
+// Clockwise from bottom-left:
+// pos  0       → row 12, col 1   (bottom-left = START)
+// pos  1-10    → left col going UP: row 11..2, col 1
+// pos 11       → row 1,  col 1   (top-left)
+// pos 12-21    → top row going RIGHT: col 2..11, row 1
+// pos 22       → row 1,  col 12  (top-right)
+// pos 23-32    → right col going DOWN: row 2..11, col 12
+// pos 33       → row 12, col 12  (bottom-right = מזל)
+// pos 34-43    → bottom row going LEFT: col 11..2, row 12
 // ═══════════════════════════════════════════════
 
 function getGridPos(pos) {
-  // START corner (bottom-right)
-  if (pos === 0) return { row: 12, col: 12 };
+  // START corner (bottom-left)
+  if (pos === 0) return { row: 12, col: 1 };
 
-  // Right column going UP (pos 1-10 → row 11..2, col 12)
+  // Left column going UP (pos 1-10 → row 11..2, col 1)
   if (pos >= 1 && pos <= 10) {
-    return { row: 12 - pos, col: 12 };
-  }
-
-  // Top-right corner
-  if (pos === 11) return { row: 1, col: 12 };
-
-  // Top row going LEFT (pos 12-21 → col 11..2, row 1)
-  if (pos >= 12 && pos <= 21) {
-    return { row: 1, col: 12 - (pos - 11) };
+    return { row: 12 - pos, col: 1 };
   }
 
   // Top-left corner
-  if (pos === 22) return { row: 1, col: 1 };
+  if (pos === 11) return { row: 1, col: 1 };
 
-  // Left column going DOWN (pos 23-32 → row 2..11, col 1)
+  // Top row going RIGHT (pos 12-21 → col 2..11, row 1)
+  if (pos >= 12 && pos <= 21) {
+    return { row: 1, col: pos - 10 };
+  }
+
+  // Top-right corner
+  if (pos === 22) return { row: 1, col: 12 };
+
+  // Right column going DOWN (pos 23-32 → row 2..11, col 12)
   if (pos >= 23 && pos <= 32) {
-    return { row: pos - 21, col: 1 };
+    return { row: pos - 21, col: 12 };
   }
 
-  // Bottom-left corner
-  if (pos === 33) return { row: 12, col: 1 };
+  // Bottom-right corner (מזל)
+  if (pos === 33) return { row: 12, col: 12 };
 
-  // Bottom row going RIGHT (pos 34-43 → col 2..11, row 12)
+  // Bottom row going LEFT (pos 34-43 → col 11..2, row 12)
   if (pos >= 34 && pos <= 43) {
-    return { row: 12, col: pos - 32 };
+    return { row: 12, col: 12 - (pos - 33) };
   }
 
-  return { row: 12, col: 12 };
+  return { row: 12, col: 1 };
 }
 
 // ═══════════════════════════════════════════════

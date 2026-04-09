@@ -694,10 +694,10 @@ function renderBoard() {
       const c = data.concept;
       const color = ZONE_COLORS[c.zone];
       let edgeClass = '';
-      if (pos >= 1 && pos <= 10) edgeClass = 'right-col';
+      if (pos >= 1 && pos <= 10) edgeClass = 'left-col';
       else if (pos >= 12 && pos <= 21) edgeClass = 'top-row';
-      else if (pos >= 23 && pos <= 32) edgeClass = 'left-col';
-      // bottom row (34-43) = default (no special edge class)
+      else if (pos >= 23 && pos <= 32) edgeClass = 'right-col';
+      // bottom row (34-43) = default
 
       const own = cellOwnership[pos];
       const isOwned = !!own;

@@ -251,6 +251,24 @@ body {
 .lb-mode { font-size: 11px; color: var(--text3); }
 .lb-score-val { font-weight: 700; color: var(--gold); }
 .lb-date { font-size: 11px; color: var(--text3); }
+.lb-password { font-size: 11px; color: var(--orange); font-family: monospace; direction: ltr; }
+.lb-players-list { font-size: 10px; color: var(--text2); line-height: 1.5; }
+.lb-credits { font-size: 11px; color: #4fc3f7; font-weight: 600; }
+.lb-pos { font-size: 11px; color: var(--text2); }
+.lb-delete-btn {
+  padding: 4px 10px; border-radius: 6px; border: none;
+  background: rgba(239,68,68,0.1); color: var(--red);
+  font-family: 'Rubik', sans-serif; font-size: 11px;
+  cursor: pointer; transition: all 0.15s;
+}
+.lb-delete-btn:hover { background: rgba(239,68,68,0.25); }
+.lb-detail-btn {
+  padding: 4px 10px; border-radius: 6px; border: none;
+  background: rgba(124,131,255,0.1); color: var(--accent);
+  font-family: 'Rubik', sans-serif; font-size: 11px;
+  cursor: pointer; margin-left: 4px;
+}
+.lb-detail-btn:hover { background: rgba(124,131,255,0.2); }
 
 .reset-all-btn {
   margin-top: 16px; padding: 8px 16px; border-radius: 8px;
@@ -320,23 +338,33 @@ body {
 
   <!-- LEADERBOARD PANEL -->
   <div class="panel" id="panelLeaderboard">
-    <div class="panel-title">🏆 טבלת דירוג</div>
-    <div class="panel-sub">כל הקבוצות והשחקנים שהשתתפו במשחק</div>
+    <div class="panel-title">🏆 ניהול משתתפים ודירוג</div>
+    <div class="panel-sub">צפייה בתוצאות, סיסמאות, שחקנים · הסרת קבוצות מהמשחק</div>
+    <div style="overflow-x:auto">
     <table class="lb-table">
       <thead>
         <tr>
-          <th>מקום</th>
-          <th>שם</th>
+          <th>#</th>
+          <th>שם קבוצה</th>
           <th>מצב</th>
+          <th>שחקנים</th>
+          <th>סיסמה</th>
           <th>ניקוד</th>
+          <th>קרדיטים</th>
+          <th>משבצת</th>
           <th>נצפה</th>
+          <th>פעולות</th>
         </tr>
       </thead>
       <tbody id="lbBody">
-        <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">טוען...</td></tr>
+        <tr><td colspan="10" style="text-align:center;color:var(--text3);padding:30px">טוען...</td></tr>
       </tbody>
     </table>
-    <button class="reset-all-btn" onclick="resetAllScores()">🗑️ אפס את כל הניקודים</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      <button class="reset-all-btn" onclick="resetAllScores()">🔄 אפס את כל הניקודים</button>
+      <button class="reset-all-btn" onclick="deleteAllGroups()" style="border-color:rgba(239,68,68,0.4)">🗑️ מחק את כל הקבוצות</button>
+    </div>
   </div>
 </div>
 
@@ -555,31 +583,68 @@ async function saveQuestions() {
 }
 
 // ═══════════════════════════════════════════════
-// LEADERBOARD
+// LEADERBOARD & GROUP MANAGEMENT
 // ═══════════════════════════════════════════════
 async function loadLeaderboard() {
   try {
-    const groups = await DB.getLeaderboard(50);
+    const snap = await db.ref('groups').orderByChild('score').limitToLast(100).once('value');
+    const groups = [];
+    snap.forEach(child => { groups.push({ key: child.key, ...child.val() }); });
+    groups.reverse();
+
     const body = document.getElementById('lbBody');
     if (!groups.length) {
-      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">אין קבוצות עדיין</td></tr>';
+      body.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:30px">אין קבוצות עדיין</td></tr>';
       return;
     }
     body.innerHTML = groups.map((g, i) => {
       const rankClass = i < 3 ? `r${i+1}` : '';
       const mode = g.mode === 'group' ? '👥 קבוצתי' : '🧑 בודד';
       const date = g.lastSeen ? new Date(g.lastSeen).toLocaleDateString('he-IL') : '-';
+      const pw = g.password || '<span style="color:var(--text3)">—</span>';
+
+      // Players details
+      let playersHtml = '-';
+      let creditsHtml = '-';
+      let posHtml = '-';
+      if (g.players && g.players.length) {
+        playersHtml = g.players.map(p => p.name).join(', ');
+        creditsHtml = g.players.map(p => `${p.name}: ${p.credits ?? 50}₪`).join('<br>');
+        posHtml = g.players.map(p => `${p.name}: ${p.pos ?? 0}`).join('<br>');
+      } else {
+        creditsHtml = `${g.credits ?? 50}₪`;
+        posHtml = `${g.pos ?? 0}`;
+      }
+
+      const eName = encodeURIComponent(g.key);
       return `
         <tr>
           <td><div class="lb-rank-cell ${rankClass}">${i + 1}</div></td>
-          <td class="lb-group-name">${g.name}</td>
+          <td class="lb-group-name">${g.name || g.key}</td>
           <td class="lb-mode">${mode}</td>
+          <td class="lb-players-list">${playersHtml}</td>
+          <td class="lb-password">${pw}</td>
           <td class="lb-score-val">⭐ ${g.score || 0}</td>
+          <td class="lb-credits">${creditsHtml}</td>
+          <td class="lb-pos">${posHtml}</td>
           <td class="lb-date">${date}</td>
+          <td><button class="lb-delete-btn" onclick="deleteGroup('${eName}')">🗑️ הסר</button></td>
         </tr>`;
     }).join('');
   } catch (e) {
     console.error(e);
+    document.getElementById('lbBody').innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--red);padding:20px">שגיאה בטעינה</td></tr>';
+  }
+}
+
+async function deleteGroup(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  if (!confirm(`למחוק את הקבוצה "${name}"? פעולה זו בלתי הפיכה!`)) return;
+  try {
+    await db.ref('groups/' + name).remove();
+    loadLeaderboard();
+  } catch (e) {
+    alert('שגיאה: ' + e.message);
   }
 }
 
@@ -593,10 +658,32 @@ async function resetAllScores() {
       updates[child.key + '/score'] = 0;
       updates[child.key + '/pos'] = 0;
       updates[child.key + '/visited'] = [0];
+      // Reset players credits and positions
+      const val = child.val();
+      if (val.players) {
+        val.players.forEach((p, pi) => {
+          updates[child.key + '/players/' + pi + '/score'] = 0;
+          updates[child.key + '/players/' + pi + '/credits'] = 50;
+          updates[child.key + '/players/' + pi + '/pos'] = 0;
+        });
+      }
+      updates[child.key + '/cellOwnership'] = null;
     });
     await db.ref('groups').update(updates);
     loadLeaderboard();
     alert('כל הניקודים אופסו.');
+  } catch (e) {
+    alert('שגיאה: ' + e.message);
+  }
+}
+
+async function deleteAllGroups() {
+  if (!confirm('למחוק את כל הקבוצות לצמיתות?!')) return;
+  if (!confirm('בטוח? כל הנתונים יימחקו לצמיתות!')) return;
+  try {
+    await db.ref('groups').remove();
+    loadLeaderboard();
+    alert('כל הקבוצות נמחקו.');
   } catch (e) {
     alert('שגיאה: ' + e.message);
   }
